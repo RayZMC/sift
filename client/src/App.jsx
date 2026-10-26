@@ -1,4 +1,5 @@
 import './App.css'
+import ArticleCard from './components/ArticleCard.jsx'
 
 function App() {
 
@@ -8,12 +9,14 @@ function App() {
       title: 'Community opens new rec centre',
       source: 'Example news',
       description: 'The center blah',
+      url: 'https://example.com/?article=1',
     },
     {
       id: 2,
       title: 'City is growing',
       source: 'Sample News',
       description: 'The city is growing',
+      url: 'https://example.com/?article=2',
     }
   ]
 
@@ -30,13 +33,8 @@ function App() {
         {articles.length === 0 && (
           <p>No articles to display</p>
         )}
-
         {articles.map((article) => (
-          <article key={article.id}>
-            <p>Sample Article - {article.source}</p>
-            <h3>{article.title}</h3>
-            <p>{article.description}</p>
-          </article>
+          <ArticleCard key={article.id} article={article} />
         ))}
       </section>
     </main>
