@@ -1,6 +1,22 @@
 import './App.css'
 
 function App() {
+
+  const articles = [
+    {
+      id: 1,
+      title: 'Community opens new rec centre',
+      source: 'Example news',
+      description: 'The center blah',
+    },
+    {
+      id: 2,
+      title: 'City is growing',
+      source: 'Sample News',
+      description: 'The city is growing',
+    }
+  ]
+
   return (
     <main>
       <header>
@@ -10,7 +26,18 @@ function App() {
 
       <section>
         <h2>Latest news</h2>
-        <p>Your news feed will appear here.</p>
+
+        {articles.length === 0 && (
+          <p>No articles to display</p>
+        )}
+
+        {articles.map((article) => (
+          <article key={article.id}>
+            <p>Sample Article - {article.source}</p>
+            <h3>{article.title}</h3>
+            <p>{article.description}</p>
+          </article>
+        ))}
       </section>
     </main>
   )
