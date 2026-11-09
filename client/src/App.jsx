@@ -1,27 +1,47 @@
 import './App.css'
 import ArticleCard from './components/ArticleCard.jsx'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const articles = [
-    {
-      id: 1,
-      title: 'Community opens new rec centre',
-      source: 'Example news',
-      description: 'The center blah',
-      url: 'https://example.com/?article=1',
-      category: 'World',
-    },
-    {
-      id: 2,
-      title: 'City is growing',
-      source: 'Sample News',
-      description: 'The city is growing',
-      url: 'https://example.com/?article=2',
-      category: 'Business',
+  const [articles, setArticles] = useState([])
+  const [loadStatus, setLoadStatus] = useState('loading')
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadArticles() {
+      try {
+        const response = await fetch('/api/articles')
+
+        if(!response.ok) {
+          throw new Error(`Request failed: ${response.status}`)
+        }
+
+        const data = await response.json()
+
+        if (!ignore) {
+          setArticles(data)
+          setLoadStatus('success')
+        }
+      } catch (error) {
+          if (!ignore) {
+            console.error(error)
+            setLoadStatus('error')
+          }
+      }
     }
-  ]
+
+    loadArticles()
+
+    return () => {
+      ignore = true
+    }
+
+  }, [])
+
+
+
 
   const visibleArticles = selectedCategory === 'All' ? articles : articles.filter((article) => article.category === selectedCategory)
 
@@ -46,9 +66,18 @@ function App() {
           <option value="Business">Business</option>
         </select>
 
-        {visibleArticles.length === 0 && (
+        {loadStatus === 'loading' && (
+          <p role="status">Loading articles...</p>
+        )}
+
+        {loadStatus === 'error' && (
+          <p role="alert">Could not load articles. Please refresh to try again.</p>
+        )}
+
+        {loadStatus === 'success' && visibleArticles.length === 0 && (
           <p>No articles match this category</p>
         )}
+
         {visibleArticles.map((article) => (
           <ArticleCard key={article.id} article={article} />
         ))}
