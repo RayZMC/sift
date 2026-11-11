@@ -24,6 +24,28 @@ h2 {
   margin-top: 0;
 }
 
+.feed-notice {
+  padding: 12px 16px;
+  border-radius: 6px;
+  background-color: #fff7ed;
+  color: #7c2d12;
+}
+
+.retry-button {
+  padding: 8px 16px;
+  border: 1px solid #9ca3af;
+  border-radius: 6px;
+  background-color: white;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.retry-button:focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+
 .article-card {
   display: flex;
   align-items: flex-start;

@@ -10,8 +10,8 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/articles', async (req, res) => {
     try {
-        const articles = await getArticles()
-        res.json(articles)
+        const result = await getArticles()
+        res.json(result)
     } catch (error) {
         console.error('Could not fetch news:', error.message)
         res.status(502).json({ error: 'Could not fetch news. Please try again shortly.' })

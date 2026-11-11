@@ -34,7 +34,8 @@ test('sorts across feeds by publication time and keeps missing or invalid dates 
     ]))
   })
 
-  const articles = await getArticles()
+  const { articles, unavailableFeeds } = await getArticles()
+  assert.deepEqual(unavailableFeeds, [])
 
   assert.deepEqual(articles.map((article) => article.title), [
     'newest', 'middle', 'oldest', 'undated', 'invalid',
@@ -65,7 +66,7 @@ test('removes repeated URLs within and across feeds while keeping distinct artic
     ]))
   })
 
-  const articles = await getArticles()
+  const { articles } = await getArticles()
 
   assert.deepEqual(articles.map((article) => article.url), [
     'https://example.com/technology', 'https://example.com/other', sharedUrl,
@@ -94,7 +95,7 @@ test('extracts publisher images and ignores missing, invalid, or non-image media
   ]
   t.mock.method(globalThis, 'fetch', async () => new Response(rss(items)))
 
-  const articles = await getArticles()
+  const { articles } = await getArticles()
   const images = Object.fromEntries(articles.map((article) => [article.title, article.imageUrl]))
 
   assert.deepEqual(images, {
@@ -110,4 +111,67 @@ test('extracts publisher images and ignores missing, invalid, or non-image media
     invalid: null,
     fallback: 'https://example.com/fallback.jpg',
   })
+})
+
+test('keeps successful feeds and reports an unavailable publisher', async (t) => {
+  t.mock.method(console, 'warn', () => {})
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    if (url.includes('theguardian.com')) return new Response('', { status: 503 })
+    const title = url.includes('/world/') ? 'world-story' : 'business-story'
+    return new Response(rss([{ title }]))
+  })
+
+  const { articles, unavailableFeeds } = await getArticles()
+
+  assert.deepEqual(articles.map((article) => article.category), ['World', 'Business'])
+  assert.deepEqual(unavailableFeeds, [{ source: 'The Guardian', category: 'Technology' }])
+})
+
+test('handles a timed-out feed and malformed RSS without losing the remaining feed', async (t) => {
+  t.mock.method(console, 'warn', () => {})
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    if (url.includes('/world/')) throw new DOMException('Request timed out', 'TimeoutError')
+    if (url.includes('/business/')) return new Response('<rss><broken>')
+    return new Response(rss([{ title: 'technology-story' }]))
+  })
+
+  const { articles, unavailableFeeds } = await getArticles()
+
+  assert.equal(articles.length, 1)
+  assert.equal(articles[0].category, 'Technology')
+  assert.deepEqual(unavailableFeeds, [
+    { source: 'BBC News', category: 'World' },
+    { source: 'BBC News', category: 'Business' },
+  ])
+})
+
+test('rejects when every feed fails and succeeds when a later request recovers', async (t) => {
+  let offline = true
+  t.mock.method(console, 'warn', () => {})
+  t.mock.method(globalThis, 'fetch', async () => {
+    if (offline) throw new Error('Network unavailable')
+    return new Response(rss([{ title: 'recovered-story' }]))
+  })
+
+  await assert.rejects(getArticles(), /All news feeds are unavailable/)
+
+  offline = false
+  const { articles, unavailableFeeds } = await getArticles()
+  assert.equal(articles.length, 1)
+  assert.deepEqual(unavailableFeeds, [])
+})
+
+test('treats a valid empty feed as available, even when the other feeds fail', async (t) => {
+  t.mock.method(console, 'warn', () => {})
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    if (url.includes('/world/')) return new Response(rss([]))
+    throw new Error('Network unavailable')
+  })
+
+  const { articles, unavailableFeeds } = await getArticles()
+  assert.deepEqual(articles, [])
+  assert.deepEqual(unavailableFeeds, [
+    { source: 'BBC News', category: 'Business' },
+    { source: 'The Guardian', category: 'Technology' },
+  ])
 })

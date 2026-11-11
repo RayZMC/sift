@@ -6,6 +6,8 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [articles, setArticles] = useState([])
   const [loadStatus, setLoadStatus] = useState('loading')
+  const [unavailableFeeds, setUnavailableFeeds] = useState([])
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     let ignore = false
@@ -21,7 +23,8 @@ function App() {
         const data = await response.json()
 
         if (!ignore) {
-          setArticles(data)
+          setArticles(data.articles)
+          setUnavailableFeeds(data.unavailableFeeds)
           setLoadStatus('success')
         }
       } catch (error) {
@@ -38,10 +41,14 @@ function App() {
       ignore = true
     }
 
-  }, [])
+  }, [retryCount])
 
-
-
+  function retryArticles() {
+    setLoadStatus('loading')
+    setArticles([])
+    setUnavailableFeeds([])
+    setRetryCount((count) => count + 1)
+  }
 
   const visibleArticles = selectedCategory === 'All' ? articles : articles.filter((article) => article.category === selectedCategory)
 
@@ -72,11 +79,25 @@ function App() {
         )}
 
         {loadStatus === 'error' && (
-          <p role="alert">Could not load articles. Please refresh to try again.</p>
+          <p role="alert" className="feed-notice">Could not load news right now. Please try again shortly.</p>
+        )}
+
+        {loadStatus === 'success' && unavailableFeeds.length > 0 && (
+          <p role="status" className="feed-notice">
+            Some feeds are temporarily unavailable: {unavailableFeeds.map((feed) =>
+              `${feed.source} (${feed.category})`,
+            ).join(', ')}.
+          </p>
+        )}
+
+        {(loadStatus === 'error' || (loadStatus === 'success' && unavailableFeeds.length > 0)) && (
+          <button type="button" className="retry-button" onClick={retryArticles}>
+            Try again
+          </button>
         )}
 
         {loadStatus === 'success' && visibleArticles.length === 0 && (
-          <p>No articles match this category</p>
+          <p>No articles are available in this category right now.</p>
         )}
 
         {visibleArticles.map((article) => (

@@ -78,7 +78,24 @@ async function fetchFeed(feed) {
 }
 
 export async function getArticles() {
-  const articleGroups = await Promise.all(feeds.map(fetchFeed))
+  const results = await Promise.allSettled(feeds.map(fetchFeed))
+  const articleGroups = []
+  const unavailableFeeds = []
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      articleGroups.push(result.value)
+    } else {
+      const feed = feeds[index]
+      unavailableFeeds.push({ source: feed.source, category: feed.category })
+      console.warn(`Could not load ${feed.source} (${feed.category}): ${result.reason.message}`)
+    }
+  })
+
+  if (unavailableFeeds.length === feeds.length) {
+    throw new Error('All news feeds are unavailable')
+  }
+
   const seenUrls = new Set()
   const uniqueArticles = articleGroups.flat().filter((article) => {
     // Keep the first occurrence, using the order of the configured feeds.
@@ -87,10 +104,12 @@ export async function getArticles() {
     return true
   })
 
-  return uniqueArticles.sort((a, b) => {
+  const articles = uniqueArticles.sort((a, b) => {
     // Keep undated articles after all dated articles.
     if (!a.publishedAt) return b.publishedAt ? 1 : 0
     if (!b.publishedAt) return -1
     return Date.parse(b.publishedAt) - Date.parse(a.publishedAt)
   })
+
+  return { articles, unavailableFeeds }
 }
