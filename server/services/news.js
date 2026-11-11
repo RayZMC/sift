@@ -8,6 +8,11 @@ const feeds = [
   { source: 'The Guardian', category: 'Technology', url: 'https://www.theguardian.com/technology/rss' },
 ]
 
+function normalizeDate(value) {
+  const date = new Date(value || '')
+  return Number.isNaN(date.getTime()) ? null : date.toISOString()
+}
+
 async function fetchFeed(feed) {
   const response = await fetch(feed.url, {
     signal: AbortSignal.timeout(10000),
@@ -30,10 +35,16 @@ async function fetchFeed(feed) {
       description: item.contentSnippet || '',
       url: item.link,
       category: feed.category,
+      publishedAt: normalizeDate(item.isoDate || item.pubDate),
     }))
 }
 
 export async function getArticles() {
   const articleGroups = await Promise.all(feeds.map(fetchFeed))
-  return articleGroups.flat()
+  return articleGroups.flat().sort((a, b) => {
+    // Keep undated articles after all dated articles.
+    if (!a.publishedAt) return b.publishedAt ? 1 : 0
+    if (!b.publishedAt) return -1
+    return Date.parse(b.publishedAt) - Date.parse(a.publishedAt)
+  })
 }
