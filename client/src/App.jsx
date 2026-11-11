@@ -64,6 +64,7 @@ function App() {
           <option value="All">All categories</option>
           <option value="World">World</option>
           <option value="Business">Business</option>
+          <option value="Technology">Technology</option>
         </select>
 
         {loadStatus === 'loading' && (

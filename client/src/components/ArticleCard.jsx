@@ -1,7 +1,7 @@
 function ArticleCard({ article }) {
   return (
     <article>
-      <p>Sample Article - {article.source}</p>
+      <p>{article.source}</p>
       <h3>
         {article.url ? (
           <a href={article.url}>{article.title}</a>

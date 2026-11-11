@@ -3,8 +3,9 @@ import Parser from 'rss-parser'
 const parser = new Parser()
 
 const feeds = [
-  { category: 'World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
-  { category: 'Business', url: 'https://feeds.bbci.co.uk/news/business/rss.xml' },
+  { source: 'BBC News', category: 'World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
+  { source: 'BBC News', category: 'Business', url: 'https://feeds.bbci.co.uk/news/business/rss.xml' },
+  { source: 'The Guardian', category: 'Technology', url: 'https://www.theguardian.com/technology/rss' },
 ]
 
 async function fetchFeed(feed) {
@@ -25,7 +26,7 @@ async function fetchFeed(feed) {
     .map((item) => ({
       id: `${feed.category}:${item.link}`,
       title: item.title,
-      source: 'BBC News',
+      source: feed.source,
       description: item.contentSnippet || '',
       url: item.link,
       category: feed.category,
