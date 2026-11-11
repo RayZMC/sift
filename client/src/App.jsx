@@ -86,7 +86,7 @@ function App() {
           <p role="status" className="feed-notice">
             Some feeds are temporarily unavailable: {unavailableFeeds.map((feed) =>
               `${feed.source} (${feed.category})`,
-            ).join(', ')}.
+            ).join(', ')}. Please wait a minute before trying again.
           </p>
         )}
 
