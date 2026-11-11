@@ -1,6 +1,13 @@
 import Parser from 'rss-parser'
 
-const parser = new Parser()
+const parser = new Parser({
+  customFields: {
+    item: [
+      ['media:thumbnail', 'thumbnails', { keepArray: true }],
+      ['media:content', 'media', { keepArray: true }],
+    ],
+  },
+})
 
 const feeds = [
   { source: 'BBC News', category: 'World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
@@ -11,6 +18,36 @@ const feeds = [
 function normalizeDate(value) {
   const date = new Date(value || '')
   return Number.isNaN(date.getTime()) ? null : date.toISOString()
+}
+
+function getImageUrl(item) {
+  // Publishers use different RSS fields for images.
+  const candidates = [
+    ...(item.thumbnails || []).map((image) => image.$?.url),
+    ...(item.media || [])
+      .filter((image) => {
+        const attributes = image.$
+        if (attributes?.medium) return attributes.medium === 'image'
+        if (attributes?.type) return attributes.type.startsWith('image/')
+        // The Guardian omits the media type, but supplies image file URLs.
+        return /\.(avif|gif|jpe?g|png|webp)([?#]|$)/i.test(attributes?.url || '')
+      })
+      .sort((a, b) => Number(b.$?.width || 0) - Number(a.$?.width || 0))
+      .map((image) => image.$?.url),
+    item.enclosure?.type?.startsWith('image/') ? item.enclosure.url : null,
+  ]
+
+  for (const candidate of candidates) {
+    try {
+      const url = new URL(candidate)
+      if (['http:', 'https:'].includes(url.protocol) && !url.username && !url.password) {
+        return url.href
+      }
+    } catch {
+      // Skip missing or malformed URLs and try the next image.
+    }
+  }
+  return null
 }
 
 async function fetchFeed(feed) {
@@ -36,6 +73,7 @@ async function fetchFeed(feed) {
       url: item.link,
       category: feed.category,
       publishedAt: normalizeDate(item.isoDate || item.pubDate),
+      imageUrl: getImageUrl(item),
     }))
 }
 
