@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "db:check": "node --env-file=.env scripts/check-db.js",
+    "db:migrate": "node --env-file=.env scripts/migrate.js",
     "test": "node --test"
   },
   "keywords": [],
