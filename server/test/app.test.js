@@ -89,3 +89,31 @@ test('unknown routes return 404', async (t) => {
   assert.equal(response.status, 404)
   await response.text()
 })
+
+test('pagination passes validated page and category to the loader', async (t) => {
+  const options = []
+  const baseUrl = await startApp(t, async (input) => {
+    options.push(input)
+    return { articles: [], unavailableFeeds: [] }
+  })
+  for (const query of ['?page=2&category=Technology', '?category=Business', '?page=1&category=All', '']) {
+    const response = await fetch(`${baseUrl}/api/articles${query}`)
+    assert.equal(response.status, 200)
+    await response.json()
+  }
+  assert.deepEqual(options, [
+    { page: 2, category: 'Technology' }, { page: 1, category: 'Business' },
+    { page: 1, category: null }, { page: undefined, category: null },
+  ])
+})
+
+test('invalid pages and categories return 400 before loading articles', async (t) => {
+  let calls = 0
+  const baseUrl = await startApp(t, async () => { calls += 1; return {} })
+  for (const query of ['page=0', 'page=-1', 'page=1.5', 'page=abc', 'page=', 'page=1000001', 'page=1&page=2', 'category=Unknown', 'category=World&category=Business']) {
+    const response = await fetch(`${baseUrl}/api/articles?${query}`)
+    assert.equal(response.status, 400, query)
+    assert.equal(typeof (await response.json()).error, 'string')
+  }
+  assert.equal(calls, 0)
+})

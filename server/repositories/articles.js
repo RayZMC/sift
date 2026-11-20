@@ -1,9 +1,11 @@
-export async function getStoredArticles(db) {
+export async function getStoredArticles(db, { category = null, limit = null, offset = 0 } = {}) {
   const { rows } = await db.query(`
     SELECT id, url, title, source, category, description, published_at, image_url
     FROM articles
+    WHERE ($1::text IS NULL OR category = $1)
     ORDER BY published_at DESC NULLS LAST, id DESC
-  `)
+    LIMIT $2 OFFSET $3
+  `, [category, limit, offset])
 
   return rows.map((row) => ({
     id: row.id,
@@ -15,6 +17,20 @@ export async function getStoredArticles(db) {
     publishedAt: row.published_at ? row.published_at.toISOString() : null,
     imageUrl: row.image_url,
   }))
+}
+
+export async function getArticlePage(db, { page, category = null }) {
+  const pageSize = 20
+  // Fetch one extra row to tell whether a Next page exists.
+  const articles = await getStoredArticles(db, {
+    category,
+    limit: pageSize + 1,
+    offset: (page - 1) * pageSize,
+  })
+  return {
+    articles: articles.slice(0, pageSize),
+    pagination: { page, pageSize, hasNext: articles.length > pageSize, hasPrevious: page > 1 },
+  }
 }
 
 export async function saveArticles(client, articles) {

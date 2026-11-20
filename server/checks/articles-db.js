@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createDatabasePool } from '../db/pool.js'
 import { once } from 'node:events'
-import { saveArticles, getStoredArticles } from '../repositories/articles.js'
+import { saveArticles, getStoredArticles, getArticlePage } from '../repositories/articles.js'
 import { createApp } from '../app.js'
 
 test('article imports insert, update by URL, preserve optional metadata, and roll back failed batches', async () => {
@@ -40,6 +40,42 @@ test('article imports insert, update by URL, preserve optional metadata, and rol
     assert.equal(afterFailure.rowCount, 1)
     assert.equal(afterFailure.rows[0].title, 'Updated headline')
     assert.equal(await saveArticles(client, []), 0)
+  } finally {
+    if (client) client.release(true)
+    await pool.end()
+  }
+})
+
+test('pagination filters the full dataset before slicing and handles page boundaries', async () => {
+  const pool = createDatabasePool()
+  let client
+  try {
+    client = await pool.connect()
+    await client.query('CREATE TEMP TABLE articles (LIKE public.articles INCLUDING ALL)')
+    assert.deepEqual((await getArticlePage(client, { page: 1 })).pagination,
+      { page: 1, pageSize: 20, hasNext: false, hasPrevious: false })
+    await saveArticles(client, Array.from({ length: 42 }, (_, index) => ({
+      title: `Article ${index}`, url: `https://example.com/page-${index}`,
+      source: 'Test', category: index % 2 === 0 ? 'World' : 'Technology',
+      publishedAt: '2026-11-20T12:00:00Z',
+    })))
+    const first = await getArticlePage(client, { page: 1, category: 'Technology' })
+    const second = await getArticlePage(client, { page: 2, category: 'Technology' })
+    assert.equal(first.articles.length, 20)
+    assert.equal(first.pagination.hasNext, true)
+    assert.equal(second.articles.length, 1)
+    assert.equal(second.pagination.hasNext, false)
+    assert.equal(second.pagination.hasPrevious, true)
+    const combined = [...first.articles, ...second.articles]
+    assert.ok(combined.every(article => article.category === 'Technology'))
+    assert.equal(new Set(combined.map(article => article.id)).size, 21)
+    assert.deepEqual(combined, await getStoredArticles(client, { category: 'Technology' }))
+    assert.equal((await getArticlePage(client, { page: 3, category: 'Technology' })).articles.length, 0)
+    assert.equal((await getArticlePage(client, { page: 1, category: 'Business' })).articles.length, 0)
+    await client.query('DELETE FROM articles WHERE url = $1', ['https://example.com/page-1'])
+    const exactPage = await getArticlePage(client, { page: 1, category: 'Technology' })
+    assert.equal(exactPage.articles.length, 20)
+    assert.equal(exactPage.pagination.hasNext, false)
   } finally {
     if (client) client.release(true)
     await pool.end()
