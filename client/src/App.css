@@ -31,7 +31,8 @@ h2 {
   color: #7c2d12;
 }
 
-.retry-button {
+.retry-button,
+.pagination button {
   padding: 8px 16px;
   border: 1px solid #9ca3af;
   border-radius: 6px;
@@ -41,9 +42,25 @@ h2 {
   cursor: pointer;
 }
 
-.retry-button:focus-visible {
+.retry-button:focus-visible,
+.pagination button:focus-visible {
   outline: 3px solid #2563eb;
   outline-offset: 3px;
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  color: #6b7280;
+  background-color: #f3f4f6;
 }
 
 .article-card {

@@ -6,25 +6,31 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [articles, setArticles] = useState([])
   const [loadStatus, setLoadStatus] = useState('loading')
-  const [unavailableFeeds, setUnavailableFeeds] = useState([])
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState({ hasNext: false })
   const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
 
     async function loadArticles() {
       try {
-        const response = await fetch('/api/articles')
+        const params = new URLSearchParams({ page: String(page), category: selectedCategory })
+        const response = await fetch(`/api/articles?${params}`, { signal: controller.signal })
 
         if(!response.ok) {
           throw new Error(`Request failed: ${response.status}`)
         }
 
         const data = await response.json()
+        if (!Array.isArray(data.articles) || !data.pagination) {
+          throw new Error('Invalid articles response')
+        }
 
         if (!ignore) {
           setArticles(data.articles)
-          setUnavailableFeeds(data.unavailableFeeds)
+          setPagination(data.pagination)
           setLoadStatus('success')
         }
       } catch (error) {
@@ -39,18 +45,26 @@ function App() {
 
     return () => {
       ignore = true
+      controller.abort()
     }
 
-  }, [retryCount])
+  }, [page, selectedCategory, retryCount])
 
-  function retryArticles() {
+  function startLoading() {
     setLoadStatus('loading')
     setArticles([])
-    setUnavailableFeeds([])
+    setPagination({ hasNext: false })
+  }
+
+  function retryArticles() {
+    startLoading()
     setRetryCount((count) => count + 1)
   }
 
-  const visibleArticles = selectedCategory === 'All' ? articles : articles.filter((article) => article.category === selectedCategory)
+  function changePage(nextPage) {
+    startLoading()
+    setPage(nextPage)
+  }
 
   return (
     <main>
@@ -66,7 +80,11 @@ function App() {
         <select
           id="category"
           value={selectedCategory}
-          onChange={(event) => setSelectedCategory(event.target.value)}
+          onChange={(event) => {
+            startLoading()
+            setSelectedCategory(event.target.value)
+            setPage(1)
+          }}
         >
           <option value="All">All categories</option>
           <option value="World">World</option>
@@ -82,27 +100,37 @@ function App() {
           <p role="alert" className="feed-notice">Could not load news right now. Please try again shortly.</p>
         )}
 
-        {loadStatus === 'success' && unavailableFeeds.length > 0 && (
-          <p role="status" className="feed-notice">
-            Some feeds are temporarily unavailable: {unavailableFeeds.map((feed) =>
-              `${feed.source} (${feed.category})`,
-            ).join(', ')}. Please wait a minute before trying again.
-          </p>
-        )}
-
-        {(loadStatus === 'error' || (loadStatus === 'success' && unavailableFeeds.length > 0)) && (
+        {loadStatus === 'error' && (
           <button type="button" className="retry-button" onClick={retryArticles}>
             Try again
           </button>
         )}
 
-        {loadStatus === 'success' && visibleArticles.length === 0 && (
-          <p>No articles are available in this category right now.</p>
+        {loadStatus === 'success' && articles.length === 0 && (
+          <p>No articles are available on this page.</p>
         )}
 
-        {visibleArticles.map((article) => (
+        {articles.map((article) => (
           <ArticleCard key={article.id} article={article} />
         ))}
+
+        <nav className="pagination" aria-label="News pages">
+          <button
+            type="button"
+            disabled={loadStatus === 'loading' || page === 1}
+            onClick={() => changePage(page - 1)}
+          >
+            Previous
+          </button>
+          <span role="status">Page {page}</span>
+          <button
+            type="button"
+            disabled={loadStatus !== 'success' || !pagination.hasNext}
+            onClick={() => changePage(page + 1)}
+          >
+            Next
+          </button>
+        </nav>
       </section>
     </main>
   )

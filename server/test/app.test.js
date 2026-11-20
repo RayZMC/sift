@@ -103,7 +103,7 @@ test('pagination passes validated page and category to the loader', async (t) =>
   }
   assert.deepEqual(options, [
     { page: 2, category: 'Technology' }, { page: 1, category: 'Business' },
-    { page: 1, category: null }, { page: undefined, category: null },
+    { page: 1, category: null }, { page: 1, category: null },
   ])
 })
 

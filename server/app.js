@@ -19,8 +19,7 @@ export function createApp(loadArticles) {
     if (rawCategory !== undefined && !['All', 'World', 'Business', 'Technology'].includes(rawCategory)) {
       return res.status(400).json({ error: 'Unknown category.' })
     }
-    // Keep the current frontend's unpaginated request until page controls are added.
-    const page = rawPage !== undefined || rawCategory !== undefined ? Number(rawPage ?? 1) : undefined
+    const page = Number(rawPage ?? 1)
     const category = rawCategory === undefined || rawCategory === 'All' ? null : rawCategory
     try {
       const result = await loadArticles({ page, category })

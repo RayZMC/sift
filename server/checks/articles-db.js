@@ -106,12 +106,15 @@ test('stored articles are ordered, mapped, and served through the API', async ()
     assert.equal(articles[3].imageUrl, null)
     assert.equal('published_at' in articles[1], false)
 
-    server = createApp(async () => ({ articles: await getStoredArticles(client), unavailableFeeds: [] }))
+    server = createApp(async (options) => ({ ...await getArticlePage(client, options), unavailableFeeds: [] }))
       .listen(0, '127.0.0.1')
     await once(server, 'listening')
     const response = await fetch(`http://127.0.0.1:${server.address().port}/api/articles`)
     assert.equal(response.status, 200)
-    assert.deepEqual(await response.json(), { articles, unavailableFeeds: [] })
+    assert.deepEqual(await response.json(), {
+      articles, unavailableFeeds: [],
+      pagination: { page: 1, pageSize: 20, hasNext: false, hasPrevious: false },
+    })
   } finally {
     if (server) {
       await new Promise((resolve, reject) => {
