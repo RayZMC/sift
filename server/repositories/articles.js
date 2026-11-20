@@ -1,3 +1,22 @@
+export async function getStoredArticles(db) {
+  const { rows } = await db.query(`
+    SELECT id, url, title, source, category, description, published_at, image_url
+    FROM articles
+    ORDER BY published_at DESC NULLS LAST, id DESC
+  `)
+
+  return rows.map((row) => ({
+    id: row.id,
+    url: row.url,
+    title: row.title,
+    source: row.source,
+    category: row.category,
+    description: row.description,
+    publishedAt: row.published_at ? row.published_at.toISOString() : null,
+    imageUrl: row.image_url,
+  }))
+}
+
 export async function saveArticles(client, articles) {
   await client.query('BEGIN')
   try {

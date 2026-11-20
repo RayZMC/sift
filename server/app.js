@@ -1,6 +1,6 @@
 import express from 'express'
 
-// Receive the article loader so tests can supply data without calling publishers.
+// Receive the article loader so API tests can supply data without a database.
 export function createApp(loadArticles) {
   const app = express()
 
@@ -15,7 +15,7 @@ export function createApp(loadArticles) {
       res.json(result)
     } catch (error) {
       console.error('Could not fetch news:', error.message)
-      res.status(502).json({ error: 'Could not fetch news. Please try again shortly.' })
+      res.status(500).json({ error: 'Could not load articles. Please try again shortly.' })
     }
   })
 

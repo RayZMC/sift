@@ -4,7 +4,7 @@ import test from 'node:test'
 import { createApp } from '../app.js'
 
 const article = {
-  id: 'https://example.com/story',
+  id: '1',
   title: 'Example headline',
   source: 'BBC News',
   description: 'Example description',
@@ -29,7 +29,7 @@ test('health endpoint returns 200 without requesting articles', async (t) => {
   let calls = 0
   const baseUrl = await startApp(t, async () => {
     calls += 1
-    throw new Error('Publisher unavailable')
+    throw new Error('Database unavailable')
   })
 
   const response = await fetch(`${baseUrl}/api/health`)
@@ -49,10 +49,10 @@ test('articles endpoint returns the JSON payload and prevents browser caching', 
   assert.deepEqual(await response.json(), payload)
 })
 
-test('partial feed failures still return 200 with available articles and warnings', async (t) => {
+test('an empty database returns 200 with an empty article list', async (t) => {
   const payload = {
-    articles: [article],
-    unavailableFeeds: [{ source: 'The Guardian', category: 'Technology' }],
+    articles: [],
+    unavailableFeeds: [],
   }
   const baseUrl = await startApp(t, async () => payload)
 
@@ -61,20 +61,20 @@ test('partial feed failures still return 200 with available articles and warning
   assert.deepEqual(await response.json(), payload)
 })
 
-test('failed retrieval returns a safe 502 response and a later request can recover', async (t) => {
+test('failed retrieval returns a safe 500 response and a later request can recover', async (t) => {
   t.mock.method(console, 'error', () => {})
   let offline = true
   const payload = { articles: [article], unavailableFeeds: [] }
   const baseUrl = await startApp(t, async () => {
-    if (offline) throw new Error('Internal publisher error details')
+    if (offline) throw new Error('Internal database error details')
     return payload
   })
 
   const failed = await fetch(`${baseUrl}/api/articles`)
-  assert.equal(failed.status, 502)
+  assert.equal(failed.status, 500)
   assert.equal(failed.headers.get('cache-control'), 'no-store')
   assert.deepEqual(await failed.json(), {
-    error: 'Could not fetch news. Please try again shortly.',
+    error: 'Could not load articles. Please try again shortly.',
   })
 
   offline = false
