@@ -1,5 +1,6 @@
 import './App.css'
 import ArticleCard from './components/ArticleCard.jsx'
+import DateFilter from './components/DateFilter.jsx'
 import { useEffect, useState } from 'react'
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
   const [retryCount, setRetryCount] = useState(0)
   const [searchInput, setSearchInput] = useState('')
   const [activeSearch, setActiveSearch] = useState('')
+  const [activeDates, setActiveDates] = useState({ from: '', to: '' })
 
   useEffect(() => {
     let ignore = false
@@ -25,6 +27,8 @@ function App() {
           publisher: selectedPublisher,
           q: activeSearch,
         })
+        if (activeDates.from) params.set('from', activeDates.from)
+        if (activeDates.to) params.set('to', activeDates.to)
         const response = await fetch(`/api/articles?${params}`, { signal: controller.signal })
 
         if(!response.ok) {
@@ -56,7 +60,7 @@ function App() {
       controller.abort()
     }
 
-  }, [page, selectedCategory, selectedPublisher, activeSearch, retryCount])
+  }, [page, selectedCategory, selectedPublisher, activeSearch, activeDates, retryCount])
 
   function startLoading() {
     setLoadStatus('loading')
@@ -81,6 +85,13 @@ function App() {
     setActiveSearch(search)
     setPage(1)
     // Also refresh when the same search is submitted again.
+    setRetryCount((count) => count + 1)
+  }
+
+  function applyDates(dates) {
+    startLoading()
+    setActiveDates(dates)
+    setPage(1)
     setRetryCount((count) => count + 1)
   }
 
@@ -160,6 +171,8 @@ function App() {
           </div>
         </div>
 
+        <DateFilter activeDates={activeDates} onApply={applyDates} />
+
         {activeSearch && (
           <p className="search-summary">Search results for “{activeSearch}”</p>
         )}
@@ -180,8 +193,8 @@ function App() {
 
         {loadStatus === 'success' && articles.length === 0 && (
           <p>{activeSearch
-            ? 'No articles match this search on this page. Try another search, category, or publisher.'
-            : 'No articles match these filters on this page. Try another category or publisher.'}</p>
+            ? 'No articles match this search on this page. Try another search or adjust your filters.'
+            : 'No articles match these filters on this page. Try adjusting your category, publisher, or dates.'}</p>
         )}
 
         {articles.map((article) => (

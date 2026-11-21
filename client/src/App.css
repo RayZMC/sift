@@ -33,7 +33,8 @@ h2 {
 
 .retry-button,
 .pagination button,
-.search-controls button {
+.search-controls button,
+.date-actions button {
   padding: 8px 16px;
   border: 1px solid #9ca3af;
   border-radius: 6px;
@@ -47,7 +48,9 @@ h2 {
 .pagination button:focus-visible,
 .search-controls button:focus-visible,
 .search-controls input:focus-visible,
-.filter-field select:focus-visible {
+.filter-field select:focus-visible,
+.filter-field input:focus-visible,
+.date-actions button:focus-visible {
   outline: 3px solid #2563eb;
   outline-offset: 3px;
 }
@@ -62,7 +65,8 @@ h2 {
 }
 
 .pagination button:disabled,
-.search-controls button:disabled {
+.search-controls button:disabled,
+.date-actions button:disabled {
   cursor: not-allowed;
   color: #6b7280;
   background-color: #f3f4f6;
@@ -107,7 +111,8 @@ h2 {
   min-width: 0;
 }
 
-.filter-field select {
+.filter-field select,
+.filter-field input {
   width: 100%;
   padding: 8px 12px;
   border: 1px solid #9ca3af;
@@ -115,6 +120,17 @@ h2 {
   background-color: white;
   color: inherit;
   font: inherit;
+}
+
+.date-filter {
+  margin-top: 20px;
+}
+
+.date-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .article-card {
