@@ -9,6 +9,8 @@ function App() {
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState({ hasNext: false })
   const [retryCount, setRetryCount] = useState(0)
+  const [searchInput, setSearchInput] = useState('')
+  const [activeSearch, setActiveSearch] = useState('')
 
   useEffect(() => {
     let ignore = false
@@ -16,7 +18,7 @@ function App() {
 
     async function loadArticles() {
       try {
-        const params = new URLSearchParams({ page: String(page), category: selectedCategory })
+        const params = new URLSearchParams({ page: String(page), category: selectedCategory, q: activeSearch })
         const response = await fetch(`/api/articles?${params}`, { signal: controller.signal })
 
         if(!response.ok) {
@@ -48,7 +50,7 @@ function App() {
       controller.abort()
     }
 
-  }, [page, selectedCategory, retryCount])
+  }, [page, selectedCategory, activeSearch, retryCount])
 
   function startLoading() {
     setLoadStatus('loading')
@@ -66,6 +68,16 @@ function App() {
     setPage(nextPage)
   }
 
+  function applySearch(value) {
+    const search = value.trim()
+    startLoading()
+    setSearchInput(search)
+    setActiveSearch(search)
+    setPage(1)
+    // Also refresh when the same search is submitted again.
+    setRetryCount((count) => count + 1)
+  }
+
   return (
     <main>
       <header>
@@ -75,6 +87,36 @@ function App() {
 
       <section>
         <h2>Latest news</h2>
+
+        <form
+          className="search-form"
+          role="search"
+          aria-label="Search news"
+          onSubmit={(event) => {
+            event.preventDefault()
+            applySearch(searchInput)
+          }}
+        >
+          <label htmlFor="news-search">Search titles and descriptions</label>
+          <div className="search-controls">
+            <input
+              id="news-search"
+              type="search"
+              value={searchInput}
+              maxLength={200}
+              placeholder="e.g. artificial intelligence"
+              onChange={(event) => setSearchInput(event.target.value)}
+            />
+            <button type="submit">Search</button>
+            <button
+              type="button"
+              disabled={!searchInput && !activeSearch}
+              onClick={() => applySearch('')}
+            >
+              Clear
+            </button>
+          </div>
+        </form>
 
         <label htmlFor="category">Category: </label>
         <select
@@ -92,6 +134,10 @@ function App() {
           <option value="Technology">Technology</option>
         </select>
 
+        {activeSearch && (
+          <p className="search-summary">Search results for “{activeSearch}”</p>
+        )}
+
         {loadStatus === 'loading' && (
           <p role="status">Loading articles...</p>
         )}
@@ -107,7 +153,9 @@ function App() {
         )}
 
         {loadStatus === 'success' && articles.length === 0 && (
-          <p>No articles are available on this page.</p>
+          <p>{activeSearch
+            ? 'No articles match this search on this page. Try another search or category.'
+            : 'No articles are available on this page.'}</p>
         )}
 
         {articles.map((article) => (
