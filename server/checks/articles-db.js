@@ -5,6 +5,48 @@ import { once } from 'node:events'
 import { saveArticles, getStoredArticles, getArticlePage } from '../repositories/articles.js'
 import { createApp } from '../app.js'
 
+test('search matches titles and descriptions literally before category filtering and pagination', async () => {
+  const pool = createDatabasePool()
+  let client
+  try {
+    client = await pool.connect()
+    await client.query('CREATE TEMP TABLE articles (LIKE public.articles INCLUDING ALL)')
+    const base = { source: 'Test', category: 'Technology', publishedAt: '2026-11-20T12:00:00Z' }
+    await saveArticles(client, [
+      ...Array.from({ length: 42 }, (_, index) => ({
+        ...base, url: `https://example.com/search-${index}`,
+        category: index % 2 === 0 ? 'Technology' : 'World',
+        title: index % 4 === 0 ? 'Space Research advances' : `Article ${index}`,
+        description: 'Latest SPACE RESEARCH findings',
+      })),
+      { ...base, url: 'https://example.com/ordinary', title: 'Unrelated headline' },
+      { ...base, url: 'https://example.com/literal', title: '100%_complete' },
+      { ...base, url: 'https://example.com/quoted', title: "A headline containing ' OR 1=1 --" },
+    ])
+    const first = await getArticlePage(client, { page: 1, category: 'Technology', search: 'space research' })
+    const second = await getArticlePage(client, { page: 2, category: 'Technology', search: 'SPACE RESEARCH' })
+    assert.equal(first.articles.length, 20)
+    assert.equal(first.pagination.hasNext, true)
+    assert.equal(second.articles.length, 1)
+    assert.equal(second.pagination.hasNext, false)
+    const combined = [...first.articles, ...second.articles]
+    assert.ok(combined.every(article => article.category === 'Technology'))
+    assert.equal(new Set(combined.map(article => article.id)).size, 21)
+    assert.ok(combined.some(article => !article.title.toLowerCase().includes('space research')))
+    assert.deepEqual(combined, await getStoredArticles(client, { category: 'Technology', search: 'space research' }))
+    const literal = await getArticlePage(client, { page: 1, search: '%_' })
+    assert.deepEqual(literal.articles.map(article => article.title), ['100%_complete'])
+    const quoted = await getArticlePage(client, { page: 1, search: "' OR 1=1 --" })
+    assert.equal(quoted.articles.length, 1)
+    assert.equal(quoted.articles[0].url, 'https://example.com/quoted')
+    assert.equal((await getArticlePage(client, { page: 1, search: 'no-such-phrase' })).articles.length, 0)
+    assert.equal((await getStoredArticles(client, { search: '' })).length, 45)
+  } finally {
+    if (client) client.release(true)
+    await pool.end()
+  }
+})
+
 test('article imports insert, update by URL, preserve optional metadata, and roll back failed batches', async () => {
   const pool = createDatabasePool()
   let client

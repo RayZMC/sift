@@ -102,8 +102,8 @@ test('pagination passes validated page and category to the loader', async (t) =>
     await response.json()
   }
   assert.deepEqual(options, [
-    { page: 2, category: 'Technology' }, { page: 1, category: 'Business' },
-    { page: 1, category: null }, { page: 1, category: null },
+    { page: 2, category: 'Technology', search: '' }, { page: 1, category: 'Business', search: '' },
+    { page: 1, category: null, search: '' }, { page: 1, category: null, search: '' },
   ])
 })
 
@@ -113,6 +113,33 @@ test('invalid pages and categories return 400 before loading articles', async (t
   for (const query of ['page=0', 'page=-1', 'page=1.5', 'page=abc', 'page=', 'page=1000001', 'page=1&page=2', 'category=Unknown', 'category=World&category=Business']) {
     const response = await fetch(`${baseUrl}/api/articles?${query}`)
     assert.equal(response.status, 400, query)
+    assert.equal(typeof (await response.json()).error, 'string')
+  }
+  assert.equal(calls, 0)
+})
+
+test('search is trimmed and combined with category and page options', async (t) => {
+  const options = []
+  const baseUrl = await startApp(t, async input => {
+    options.push(input)
+    return { articles: [], unavailableFeeds: [] }
+  })
+  for (const search of ['  Artificial Intelligence  ', '   ', 'x'.repeat(200)]) {
+    const query = new URLSearchParams({ q: search, category: 'Technology', page: '2' })
+    const response = await fetch(`${baseUrl}/api/articles?${query}`)
+    assert.equal(response.status, 200)
+    await response.json()
+  }
+  assert.deepEqual(options.map(input => input.search), ['Artificial Intelligence', '', 'x'.repeat(200)])
+  assert.ok(options.every(input => input.category === 'Technology' && input.page === 2))
+})
+
+test('repeated or oversized search parameters are rejected before database access', async (t) => {
+  let calls = 0
+  const baseUrl = await startApp(t, async () => { calls += 1; return {} })
+  for (const query of ['q=one&q=two', `q=${'x'.repeat(201)}`]) {
+    const response = await fetch(`${baseUrl}/api/articles?${query}`)
+    assert.equal(response.status, 400)
     assert.equal(typeof (await response.json()).error, 'string')
   }
   assert.equal(calls, 0)

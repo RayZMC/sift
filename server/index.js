@@ -4,8 +4,8 @@ import { getArticlePage } from './repositories/articles.js'
 
 const port = 3001
 const pool = createDatabasePool()
-const app = createApp(async ({ page, category }) => ({
-    ...await getArticlePage(pool, { page, category }),
+const app = createApp(async ({ page, category, search }) => ({
+    ...await getArticlePage(pool, { page, category, search }),
     // Kept for frontend compatibility; database reads do not check publishers.
     unavailableFeeds: [],
 }))

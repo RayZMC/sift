@@ -10,7 +10,7 @@ export function createApp(loadArticles) {
 
   app.get('/api/articles', async (req, res) => {
     res.set('Cache-Control', 'no-store')
-    const { page: rawPage, category: rawCategory } = req.query
+    const { page: rawPage, category: rawCategory, q: rawSearch } = req.query
     if (rawPage !== undefined && (
       typeof rawPage !== 'string' || !/^[1-9]\d*$/.test(rawPage) || Number(rawPage) > 1000000
     )) {
@@ -19,10 +19,14 @@ export function createApp(loadArticles) {
     if (rawCategory !== undefined && !['All', 'World', 'Business', 'Technology'].includes(rawCategory)) {
       return res.status(400).json({ error: 'Unknown category.' })
     }
+    if (rawSearch !== undefined && (typeof rawSearch !== 'string' || rawSearch.length > 200)) {
+      return res.status(400).json({ error: 'Search must be a single string of at most 200 characters.' })
+    }
+    const search = (rawSearch ?? '').trim()
     const page = Number(rawPage ?? 1)
     const category = rawCategory === undefined || rawCategory === 'All' ? null : rawCategory
     try {
-      const result = await loadArticles({ page, category })
+      const result = await loadArticles({ page, category, search })
       res.json(result)
     } catch (error) {
       console.error('Could not fetch news:', error.message)
