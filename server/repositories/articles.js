@@ -1,4 +1,7 @@
-export async function getStoredArticles(db, { category = null, search = '', publisher = null, limit = null, offset = 0 } = {}) {
+export async function getStoredArticles(db, {
+  category = null, search = '', publisher = null,
+  dateFrom = null, dateTo = null, limit = null, offset = 0,
+} = {}) {
   const { rows } = await db.query(`
     SELECT id, url, title, source, category, description, published_at, image_url
     FROM articles
@@ -6,9 +9,11 @@ export async function getStoredArticles(db, { category = null, search = '', publ
       AND ($4::text = '' OR strpos(lower(title), lower($4)) > 0
         OR strpos(lower(description), lower($4)) > 0)
       AND ($5::text IS NULL OR source = $5)
+      AND ($6::date IS NULL OR published_at >= ($6::date::timestamp AT TIME ZONE 'UTC'))
+      AND ($7::date IS NULL OR published_at < (($7::date + 1)::timestamp AT TIME ZONE 'UTC'))
     ORDER BY published_at DESC NULLS LAST, id DESC
     LIMIT $2 OFFSET $3
-  `, [category, limit, offset, search, publisher])
+  `, [category, limit, offset, search, publisher, dateFrom, dateTo])
 
   return rows.map((row) => ({
     id: row.id,
@@ -22,13 +27,17 @@ export async function getStoredArticles(db, { category = null, search = '', publ
   }))
 }
 
-export async function getArticlePage(db, { page, category = null, search = '', publisher = null }) {
+export async function getArticlePage(db, {
+  page, category = null, search = '', publisher = null, dateFrom = null, dateTo = null,
+}) {
   const pageSize = 20
   // Fetch one extra row to tell whether a Next page exists.
   const articles = await getStoredArticles(db, {
     category,
     search,
     publisher,
+    dateFrom,
+    dateTo,
     limit: pageSize + 1,
     offset: (page - 1) * pageSize,
   })

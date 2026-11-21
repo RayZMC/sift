@@ -101,7 +101,11 @@ test('pagination passes validated page and category to the loader', async (t) =>
     assert.equal(response.status, 200)
     await response.json()
   }
-  assert.deepEqual(options, [
+  assert.deepEqual(options.map(({ dateFrom, dateTo, ...filters }) => {
+    assert.equal(dateFrom, null)
+    assert.equal(dateTo, null)
+    return filters
+  }), [
     { page: 2, category: 'Technology', search: '', publisher: null }, { page: 1, category: 'Business', search: '', publisher: null },
     { page: 1, category: null, search: '', publisher: null }, { page: 1, category: null, search: '', publisher: null },
   ])
@@ -158,7 +162,7 @@ test('publisher filters combine with search, category, and pagination', async (t
     await response.json()
   }
   assert.deepEqual(options, ['BBC News', 'The Guardian', null].map(publisher => ({
-    publisher, page: 2, category: 'Technology', search: 'space',
+    publisher, page: 2, category: 'Technology', search: 'space', dateFrom: null, dateTo: null,
   })))
 })
 
@@ -169,6 +173,35 @@ test('unknown, blank, or repeated publisher filters return 400', async (t) => {
     const response = await fetch(`${baseUrl}/api/articles?${query}`)
     assert.equal(response.status, 400)
     assert.deepEqual(await response.json(), { error: 'Unknown publisher.' })
+  }
+  assert.equal(calls, 0)
+})
+
+test('date filters accept inclusive ranges, single boundaries, and leap days', async (t) => {
+  const options = []
+  const baseUrl = await startApp(t, async input => { options.push(input); return { articles: [] } })
+  for (const query of ['from=2026-11-01&to=2026-11-20', 'from=2024-02-29', 'to=2026-11-20', 'from=2026-11-20&to=2026-11-20']) {
+    const response = await fetch(`${baseUrl}/api/articles?${query}`)
+    assert.equal(response.status, 200)
+    await response.json()
+  }
+  assert.deepEqual(options.map(({ dateFrom, dateTo }) => [dateFrom, dateTo]), [
+    ['2026-11-01', '2026-11-20'], ['2024-02-29', null], [null, '2026-11-20'], ['2026-11-20', '2026-11-20'],
+  ])
+})
+
+test('invalid dates and reversed ranges are rejected before loading articles', async (t) => {
+  let calls = 0
+  const baseUrl = await startApp(t, async () => { calls += 1; return {} })
+  for (const query of [
+    'from=', 'to=no-date', 'from=2026-02-29', 'to=2026-04-31', 'from=2026-13-01',
+    'from=0000-01-01', 'from=2026-1-01', 'to=2026-11-20T12:00:00Z',
+    'from=2026-11-21&to=2026-11-20', 'from=2026-11-01&from=2026-11-02',
+    'to=2026-11-01&to=2026-11-02',
+  ]) {
+    const response = await fetch(`${baseUrl}/api/articles?${query}`)
+    assert.equal(response.status, 400, query)
+    assert.equal(typeof (await response.json()).error, 'string')
   }
   assert.equal(calls, 0)
 })

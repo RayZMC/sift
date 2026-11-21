@@ -5,6 +5,52 @@ import { once } from 'node:events'
 import { saveArticles, getStoredArticles, getArticlePage } from '../repositories/articles.js'
 import { createApp } from '../app.js'
 
+test('date ranges include full UTC days and combine with other filters before pagination', async () => {
+  const pool = createDatabasePool()
+  let client
+  try {
+    client = await pool.connect()
+    await client.query('CREATE TEMP TABLE articles (LIKE public.articles INCLUDING ALL)')
+    await client.query("SET TIME ZONE 'America/Vancouver'")
+    const base = { source: 'BBC News', category: 'World', title: 'Range story' }
+    const dates = {
+      before: '2026-11-19T23:59:59.999Z', start: '2026-11-20T00:00:00Z',
+      end: '2026-11-20T23:59:59.999Z', after: '2026-11-21T00:00:00Z',
+      offset: '2026-11-19T16:00:00-08:00', undated: null,
+    }
+    await saveArticles(client, [
+      ...Object.entries(dates).map(([name, publishedAt]) => ({ ...base, url: `https://example.com/date-${name}`, publishedAt })),
+      { ...base, url: 'https://example.com/other-source', source: 'The Guardian', publishedAt: dates.start },
+      { ...base, url: 'https://example.com/other-category', category: 'Business', publishedAt: dates.start },
+      { ...base, url: 'https://example.com/other-search', title: 'Unrelated', publishedAt: dates.start },
+    ])
+    const filters = { category: 'World', publisher: 'BBC News', search: 'Range' }
+    const range = { ...filters, dateFrom: '2026-11-20', dateTo: '2026-11-20' }
+    const matched = await getStoredArticles(client, range)
+    assert.deepEqual(matched.map(article => article.url).sort(), [
+      'https://example.com/date-end', 'https://example.com/date-offset', 'https://example.com/date-start',
+    ])
+    assert.equal((await getStoredArticles(client, { ...filters, dateFrom: '2026-11-20' })).length, 4)
+    assert.equal((await getStoredArticles(client, { ...filters, dateTo: '2026-11-20' })).length, 4)
+    assert.equal((await getStoredArticles(client, filters)).length, 6)
+    assert.equal((await getStoredArticles(client, { ...filters, dateFrom: '2027-01-01' })).length, 0)
+
+    await saveArticles(client, Array.from({ length: 21 }, (_, index) => ({
+      ...base, url: `https://example.com/date-page-${index}`, publishedAt: dates.start,
+    })))
+    const first = await getArticlePage(client, { ...range, page: 1 })
+    const second = await getArticlePage(client, { ...range, page: 2 })
+    assert.equal(first.articles.length, 20)
+    assert.equal(first.pagination.hasNext, true)
+    assert.equal(second.articles.length, 4)
+    assert.equal(second.pagination.hasNext, false)
+    assert.equal(new Set([...first.articles, ...second.articles].map(article => article.id)).size, 24)
+  } finally {
+    if (client) client.release(true)
+    await pool.end()
+  }
+})
+
 test('publisher filtering combines with category and search before pagination', async () => {
   const pool = createDatabasePool()
   let client
