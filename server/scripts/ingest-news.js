@@ -1,16 +1,11 @@
 import { createDatabasePool } from '../db/pool.js'
-import { getArticles } from '../services/news.js'
-import { saveArticles } from '../repositories/articles.js'
+import { importNews } from '../services/import-news.js'
 
 let pool
-let client
 
 try {
   pool = createDatabasePool()
-  // Fetch fresh RSS before opening a database transaction.
-  const { articles, unavailableFeeds } = await getArticles()
-  client = await pool.connect()
-  const count = await saveArticles(client, articles)
+  const { count, unavailableFeeds } = await importNews(pool)
   console.log(`Saved ${count} articles (inserted or updated by URL).`)
   if (unavailableFeeds.length > 0) {
     console.warn(`Unavailable feeds: ${unavailableFeeds.map((feed) =>
@@ -21,6 +16,5 @@ try {
   console.error('News import failed:', error.code || error.message)
   process.exitCode = 1
 } finally {
-  if (client) client.release()
   if (pool) await pool.end()
 }
