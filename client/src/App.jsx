@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedPublisher, setSelectedPublisher] = useState('All')
   const [articles, setArticles] = useState([])
   const [loadStatus, setLoadStatus] = useState('loading')
   const [page, setPage] = useState(1)
@@ -18,7 +19,12 @@ function App() {
 
     async function loadArticles() {
       try {
-        const params = new URLSearchParams({ page: String(page), category: selectedCategory, q: activeSearch })
+        const params = new URLSearchParams({
+          page: String(page),
+          category: selectedCategory,
+          publisher: selectedPublisher,
+          q: activeSearch,
+        })
         const response = await fetch(`/api/articles?${params}`, { signal: controller.signal })
 
         if(!response.ok) {
@@ -50,7 +56,7 @@ function App() {
       controller.abort()
     }
 
-  }, [page, selectedCategory, activeSearch, retryCount])
+  }, [page, selectedCategory, selectedPublisher, activeSearch, retryCount])
 
   function startLoading() {
     setLoadStatus('loading')
@@ -118,21 +124,41 @@ function App() {
           </div>
         </form>
 
-        <label htmlFor="category">Category: </label>
-        <select
-          id="category"
-          value={selectedCategory}
-          onChange={(event) => {
-            startLoading()
-            setSelectedCategory(event.target.value)
-            setPage(1)
-          }}
-        >
-          <option value="All">All categories</option>
-          <option value="World">World</option>
-          <option value="Business">Business</option>
-          <option value="Technology">Technology</option>
-        </select>
+        <div className="feed-filters">
+          <div className="filter-field">
+            <label htmlFor="category">Category</label>
+            <select
+              id="category"
+              value={selectedCategory}
+              onChange={(event) => {
+                startLoading()
+                setSelectedCategory(event.target.value)
+                setPage(1)
+              }}
+            >
+              <option value="All">All categories</option>
+              <option value="World">World</option>
+              <option value="Business">Business</option>
+              <option value="Technology">Technology</option>
+            </select>
+          </div>
+          <div className="filter-field">
+            <label htmlFor="publisher">Publisher</label>
+            <select
+              id="publisher"
+              value={selectedPublisher}
+              onChange={(event) => {
+                startLoading()
+                setSelectedPublisher(event.target.value)
+                setPage(1)
+              }}
+            >
+              <option value="All">All publishers</option>
+              <option value="BBC News">BBC News</option>
+              <option value="The Guardian">The Guardian</option>
+            </select>
+          </div>
+        </div>
 
         {activeSearch && (
           <p className="search-summary">Search results for “{activeSearch}”</p>
@@ -154,8 +180,8 @@ function App() {
 
         {loadStatus === 'success' && articles.length === 0 && (
           <p>{activeSearch
-            ? 'No articles match this search on this page. Try another search or category.'
-            : 'No articles are available on this page.'}</p>
+            ? 'No articles match this search on this page. Try another search, category, or publisher.'
+            : 'No articles match these filters on this page. Try another category or publisher.'}</p>
         )}
 
         {articles.map((article) => (

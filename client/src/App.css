@@ -46,7 +46,8 @@ h2 {
 .retry-button:focus-visible,
 .pagination button:focus-visible,
 .search-controls button:focus-visible,
-.search-controls input:focus-visible {
+.search-controls input:focus-visible,
+.filter-field select:focus-visible {
   outline: 3px solid #2563eb;
   outline-offset: 3px;
 }
@@ -90,6 +91,30 @@ h2 {
 
 .search-summary {
   overflow-wrap: anywhere;
+}
+
+.feed-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.filter-field select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #9ca3af;
+  border-radius: 6px;
+  background-color: white;
+  color: inherit;
+  font: inherit;
 }
 
 .article-card {
