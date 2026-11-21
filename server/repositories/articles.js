@@ -1,13 +1,14 @@
-export async function getStoredArticles(db, { category = null, search = '', limit = null, offset = 0 } = {}) {
+export async function getStoredArticles(db, { category = null, search = '', publisher = null, limit = null, offset = 0 } = {}) {
   const { rows } = await db.query(`
     SELECT id, url, title, source, category, description, published_at, image_url
     FROM articles
     WHERE ($1::text IS NULL OR category = $1)
       AND ($4::text = '' OR strpos(lower(title), lower($4)) > 0
         OR strpos(lower(description), lower($4)) > 0)
+      AND ($5::text IS NULL OR source = $5)
     ORDER BY published_at DESC NULLS LAST, id DESC
     LIMIT $2 OFFSET $3
-  `, [category, limit, offset, search])
+  `, [category, limit, offset, search, publisher])
 
   return rows.map((row) => ({
     id: row.id,
@@ -21,12 +22,13 @@ export async function getStoredArticles(db, { category = null, search = '', limi
   }))
 }
 
-export async function getArticlePage(db, { page, category = null, search = '' }) {
+export async function getArticlePage(db, { page, category = null, search = '', publisher = null }) {
   const pageSize = 20
   // Fetch one extra row to tell whether a Next page exists.
   const articles = await getStoredArticles(db, {
     category,
     search,
+    publisher,
     limit: pageSize + 1,
     offset: (page - 1) * pageSize,
   })

@@ -102,8 +102,8 @@ test('pagination passes validated page and category to the loader', async (t) =>
     await response.json()
   }
   assert.deepEqual(options, [
-    { page: 2, category: 'Technology', search: '' }, { page: 1, category: 'Business', search: '' },
-    { page: 1, category: null, search: '' }, { page: 1, category: null, search: '' },
+    { page: 2, category: 'Technology', search: '', publisher: null }, { page: 1, category: 'Business', search: '', publisher: null },
+    { page: 1, category: null, search: '', publisher: null }, { page: 1, category: null, search: '', publisher: null },
   ])
 })
 
@@ -141,6 +141,34 @@ test('repeated or oversized search parameters are rejected before database acces
     const response = await fetch(`${baseUrl}/api/articles?${query}`)
     assert.equal(response.status, 400)
     assert.equal(typeof (await response.json()).error, 'string')
+  }
+  assert.equal(calls, 0)
+})
+
+test('publisher filters combine with search, category, and pagination', async (t) => {
+  const options = []
+  const baseUrl = await startApp(t, async input => {
+    options.push(input)
+    return { articles: [], unavailableFeeds: [] }
+  })
+  for (const publisher of ['BBC News', 'The Guardian', 'All']) {
+    const query = new URLSearchParams({ publisher, page: '2', category: 'Technology', q: 'space' })
+    const response = await fetch(`${baseUrl}/api/articles?${query}`)
+    assert.equal(response.status, 200)
+    await response.json()
+  }
+  assert.deepEqual(options, ['BBC News', 'The Guardian', null].map(publisher => ({
+    publisher, page: 2, category: 'Technology', search: 'space',
+  })))
+})
+
+test('unknown, blank, or repeated publisher filters return 400', async (t) => {
+  let calls = 0
+  const baseUrl = await startApp(t, async () => { calls += 1; return {} })
+  for (const query of ['publisher=Unknown', 'publisher=', 'publisher=BBC', 'publisher=All&publisher=BBC%20News']) {
+    const response = await fetch(`${baseUrl}/api/articles?${query}`)
+    assert.equal(response.status, 400)
+    assert.deepEqual(await response.json(), { error: 'Unknown publisher.' })
   }
   assert.equal(calls, 0)
 })

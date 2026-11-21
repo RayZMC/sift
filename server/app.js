@@ -10,7 +10,7 @@ export function createApp(loadArticles) {
 
   app.get('/api/articles', async (req, res) => {
     res.set('Cache-Control', 'no-store')
-    const { page: rawPage, category: rawCategory, q: rawSearch } = req.query
+    const { page: rawPage, category: rawCategory, q: rawSearch, publisher: rawPublisher } = req.query
     if (rawPage !== undefined && (
       typeof rawPage !== 'string' || !/^[1-9]\d*$/.test(rawPage) || Number(rawPage) > 1000000
     )) {
@@ -23,10 +23,14 @@ export function createApp(loadArticles) {
       return res.status(400).json({ error: 'Search must be a single string of at most 200 characters.' })
     }
     const search = (rawSearch ?? '').trim()
+    if (rawPublisher !== undefined && !['All', 'BBC News', 'The Guardian'].includes(rawPublisher)) {
+      return res.status(400).json({ error: 'Unknown publisher.' })
+    }
+    const publisher = rawPublisher === undefined || rawPublisher === 'All' ? null : rawPublisher
     const page = Number(rawPage ?? 1)
     const category = rawCategory === undefined || rawCategory === 'All' ? null : rawCategory
     try {
-      const result = await loadArticles({ page, category, search })
+      const result = await loadArticles({ page, category, search, publisher })
       res.json(result)
     } catch (error) {
       console.error('Could not fetch news:', error.message)

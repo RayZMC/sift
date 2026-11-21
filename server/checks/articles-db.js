@@ -5,6 +5,45 @@ import { once } from 'node:events'
 import { saveArticles, getStoredArticles, getArticlePage } from '../repositories/articles.js'
 import { createApp } from '../app.js'
 
+test('publisher filtering combines with category and search before pagination', async () => {
+  const pool = createDatabasePool()
+  let client
+  try {
+    client = await pool.connect()
+    await client.query('CREATE TEMP TABLE articles (LIKE public.articles INCLUDING ALL)')
+    const base = { title: 'Space discovery', category: 'Technology', publishedAt: '2026-11-20T12:00:00Z' }
+    await saveArticles(client, [
+      ...Array.from({ length: 42 }, (_, index) => ({
+        ...base, url: `https://example.com/publisher-${index}`,
+        source: index % 2 === 0 ? 'BBC News' : 'The Guardian',
+      })),
+      { ...base, source: 'BBC News', category: 'World', url: 'https://example.com/other-category' },
+      { ...base, source: 'BBC News', title: 'Unrelated headline', url: 'https://example.com/other-topic' },
+    ])
+    const options = { publisher: 'BBC News', category: 'Technology', search: 'space' }
+    const first = await getArticlePage(client, { ...options, page: 1 })
+    const second = await getArticlePage(client, { ...options, page: 2 })
+    assert.equal(first.articles.length, 20)
+    assert.equal(first.pagination.hasNext, true)
+    assert.equal(second.articles.length, 1)
+    assert.equal(second.pagination.hasNext, false)
+    const combined = [...first.articles, ...second.articles]
+    assert.ok(combined.every(article => article.source === 'BBC News' && article.category === 'Technology'))
+    assert.equal(new Set(combined.map(article => article.id)).size, 21)
+    assert.deepEqual(combined, await getStoredArticles(client, options))
+    assert.equal((await getStoredArticles(client, { ...options, publisher: null })).length, 42)
+    const guardian = await getStoredArticles(client, { ...options, publisher: 'The Guardian' })
+    assert.equal(guardian.length, 21)
+    assert.ok(guardian.every(article => article.source === 'The Guardian'))
+    const empty = await getArticlePage(client, { ...options, publisher: 'The Guardian', category: 'World', page: 1 })
+    assert.deepEqual(empty.articles, [])
+    assert.equal(empty.pagination.hasNext, false)
+  } finally {
+    if (client) client.release(true)
+    await pool.end()
+  }
+})
+
 test('search matches titles and descriptions literally before category filtering and pagination', async () => {
   const pool = createDatabasePool()
   let client
