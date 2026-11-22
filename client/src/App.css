@@ -34,7 +34,9 @@ h2 {
 .retry-button,
 .pagination button,
 .search-controls button,
-.date-actions button {
+.date-actions button,
+.bookmark-controls button,
+.feed-tabs button {
   padding: 8px 16px;
   border: 1px solid #9ca3af;
   border-radius: 6px;
@@ -50,7 +52,9 @@ h2 {
 .search-controls input:focus-visible,
 .filter-field select:focus-visible,
 .filter-field input:focus-visible,
-.date-actions button:focus-visible {
+.date-actions button:focus-visible,
+.bookmark-controls button:focus-visible,
+.feed-tabs button:focus-visible {
   outline: 3px solid #2563eb;
   outline-offset: 3px;
 }
@@ -66,7 +70,8 @@ h2 {
 
 .pagination button:disabled,
 .search-controls button:disabled,
-.date-actions button:disabled {
+.date-actions button:disabled,
+.bookmark-controls button:disabled {
   cursor: not-allowed;
   color: #6b7280;
   background-color: #f3f4f6;
@@ -131,6 +136,31 @@ h2 {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 12px;
+}
+
+.feed-tabs button[aria-pressed="true"] {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+  color: white;
+}
+
+.form-error {
+  color: #991b1b;
+}
+
+.feed-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.bookmark-controls {
+  margin-top: 16px;
+}
+
+.bookmark-controls p {
+  margin: 8px 0 0;
 }
 
 .article-card {

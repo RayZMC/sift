@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function ArticleCard({ article }) {
+function ArticleCard({ article, children }) {
   const [failedImageUrl, setFailedImageUrl] = useState(null)
   const publishedDate = article.publishedAt ? new Date(article.publishedAt) : null
   const hasValidDate = publishedDate && !Number.isNaN(publishedDate.getTime())
@@ -37,6 +37,7 @@ function ArticleCard({ article }) {
           </p>
         )}
         <p>{article.description}</p>
+        {children}
       </div>
     </article>
   );

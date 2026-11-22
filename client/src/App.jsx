@@ -1,9 +1,14 @@
 import './App.css'
 import ArticleCard from './components/ArticleCard.jsx'
 import DateFilter from './components/DateFilter.jsx'
+import BookmarkButton from './components/BookmarkButton.jsx'
+import SavedArticles from './components/SavedArticles.jsx'
+import useLocalLibrary from './hooks/useLocalLibrary.js'
 import { useEffect, useState } from 'react'
 
 function App() {
+  const library = useLocalLibrary()
+  const [showingSaved, setShowingSaved] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedPublisher, setSelectedPublisher] = useState('All')
   const [articles, setArticles] = useState([])
@@ -102,7 +107,15 @@ function App() {
         <p>Discover news from multiple sources in one place.</p>
       </header>
 
-      <section>
+      <p>Bookmarks are saved in this browser only. Clearing browser data removes them.</p>
+      {library.error && <p role="alert">{library.error}</p>}
+      <nav className="feed-tabs" aria-label="Article views">
+        <button type="button" aria-pressed={!showingSaved} onClick={() => setShowingSaved(false)}>Latest news</button>
+        <button type="button" aria-pressed={showingSaved} onClick={() => setShowingSaved(true)}>Saved articles</button>
+      </nav>
+      {showingSaved && <SavedArticles articles={library.bookmarks} onRemove={library.removeArticle} />}
+
+      <section hidden={showingSaved}>
         <h2>Latest news</h2>
 
         <form
@@ -201,7 +214,10 @@ function App() {
         )}
 
         {articles.map((article) => (
-          <ArticleCard key={article.id} article={article} />
+          <ArticleCard key={article.id} article={article}>
+            <BookmarkButton saved={library.bookmarks.some(saved => saved.id === article.id)}
+              onSave={() => library.saveArticle(article)} onRemove={() => library.removeArticle(article.id)} />
+          </ArticleCard>
         ))}
 
         <nav className="pagination" aria-label="News pages">
