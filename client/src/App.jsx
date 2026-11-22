@@ -107,16 +107,29 @@ function App() {
         <p>Discover news from multiple sources in one place.</p>
       </header>
 
-      <p>Bookmarks are saved in this browser only. Clearing browser data removes them.</p>
       {library.error && <p role="alert">{library.error}</p>}
-      <nav className="feed-tabs" aria-label="Article views">
-        <button type="button" aria-pressed={!showingSaved} onClick={() => setShowingSaved(false)}>Latest news</button>
-        <button type="button" aria-pressed={showingSaved} onClick={() => setShowingSaved(true)}>Saved articles</button>
+      <nav className="feed-tabs" aria-label="News categories">
+        {['All', 'World', 'Technology', 'Business', 'Science', 'Sports', 'Entertainment'].map(category => (
+          <button key={category} type="button" aria-pressed={!showingSaved && selectedCategory === category}
+            onClick={() => {
+              setShowingSaved(false)
+              if (selectedCategory !== category) {
+                startLoading()
+                setSelectedCategory(category)
+                setPage(1)
+              }
+            }}>
+            {category === 'All' ? 'Latest' : category}
+          </button>
+        ))}
+        <button type="button" aria-pressed={showingSaved} onClick={() => setShowingSaved(true)}>
+          Saved <span className="saved-count">{library.bookmarks.length}</span>
+        </button>
       </nav>
       {showingSaved && <SavedArticles articles={library.bookmarks} onRemove={library.removeArticle} />}
 
       <section hidden={showingSaved}>
-        <h2>Latest news</h2>
+        <h2>{selectedCategory === 'All' ? 'Latest news' : `${selectedCategory} news`}</h2>
 
         <form
           className="search-form"
@@ -149,26 +162,6 @@ function App() {
         </form>
 
         <div className="feed-filters">
-          <div className="filter-field">
-            <label htmlFor="category">Category</label>
-            <select
-              id="category"
-              value={selectedCategory}
-              onChange={(event) => {
-                startLoading()
-                setSelectedCategory(event.target.value)
-                setPage(1)
-              }}
-            >
-              <option value="All">All categories</option>
-              <option value="World">World</option>
-              <option value="Business">Business</option>
-              <option value="Technology">Technology</option>
-              <option value="Science">Science</option>
-              <option value="Sports">Sports</option>
-              <option value="Entertainment">Entertainment</option>
-            </select>
-          </div>
           <div className="filter-field">
             <label htmlFor="publisher">Publisher</label>
             <select

@@ -150,9 +150,22 @@ h2 {
 
 .feed-tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 4px 12px;
   margin-bottom: 16px;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.feed-tabs button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.saved-count {
+  margin-left: 4px;
+  font-size: 14px;
 }
 
 .bookmark-controls {
