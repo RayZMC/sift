@@ -83,7 +83,8 @@ h2 {
 .search-controls button,
 .date-actions button,
 .bookmark-controls button,
-.feed-tabs button {
+.feed-tabs button,
+.read-story {
   padding: 8px 16px;
   border: 1px solid #9ca3af;
   border-radius: 6px;
@@ -341,8 +342,8 @@ h2 {
 }
 
 .read-story {
-  color: #1d4ed8;
-  font-weight: 600;
+  display: inline-block;
+  text-decoration: none;
 }
 
 .article-source {
