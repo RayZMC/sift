@@ -1,6 +1,7 @@
 import './App.css'
 import ArticleCard from './components/ArticleCard.jsx'
 import DateFilter from './components/DateFilter.jsx'
+import FilterPopover from './components/FilterPopover.jsx'
 import CategoryIcon from './components/CategoryIcon.jsx'
 import BookmarkButton from './components/BookmarkButton.jsx'
 import SavedArticles from './components/SavedArticles.jsx'
@@ -174,10 +175,10 @@ function App() {
         {showingSaved && <SavedArticles articles={library.bookmarks} onRemove={library.removeArticle} />}
 
         <section className="news-section" hidden={showingSaved}>
+          <div className="feed-heading">
           <h2>{selectedCategory === 'Top' ? 'Top news' : `${selectedCategory} news`}</h2>
 
-          <details className="news-filters">
-            <summary>Filter by publisher or date{(selectedPublisher !== 'All' || activeDates.from || activeDates.to) ? ' (active)' : ''}</summary>
+          <FilterPopover active={selectedPublisher !== 'All' || Boolean(activeDates.from || activeDates.to)}>
             <div className="feed-filters">
               <div className="filter-field">
                 <label htmlFor="publisher">Publisher</label>
@@ -202,7 +203,8 @@ function App() {
             </div>
 
             <DateFilter activeDates={activeDates} onApply={applyDates} />
-          </details>
+          </FilterPopover>
+          </div>
 
           {activeSearch && (
             <p className="search-summary">Search results for “{activeSearch}”</p>

@@ -243,21 +243,76 @@ h2 {
   margin: 8px 0 0;
 }
 
+.feed-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.feed-heading h2 {
+  margin: 0;
+}
+
 .news-filters {
-  padding: 16px;
-  margin: 20px 0;
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .news-filters summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #9ca3af;
+  border-radius: 6px;
+  background: white;
   cursor: pointer;
-  font-weight: 600;
+  font-size: 14px;
+  list-style: none;
+}
+
+.news-filters summary::-webkit-details-marker {
+  display: none;
 }
 
 .news-filters[open] summary {
-  margin-bottom: 16px;
+  border-color: #1d4ed8;
+  color: #1d4ed8;
+}
+
+.filter-active {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #1d4ed8;
+}
+
+.filter-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  width: min(340px, calc(100vw - 32px));
+  max-height: min(480px, 70vh);
+  overflow-y: auto;
+  padding: 16px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+}
+
+.filter-popover .filter-field {
+  flex-basis: 130px;
+}
+
+.filter-popover .date-filter {
+  margin-top: 16px;
+}
+
+.filter-popover p {
+  font-size: 14px;
 }
 
 .article-grid {
