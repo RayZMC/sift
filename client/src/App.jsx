@@ -1,6 +1,7 @@
 import './App.css'
 import ArticleCard from './components/ArticleCard.jsx'
 import DateFilter from './components/DateFilter.jsx'
+import CategoryIcon from './components/CategoryIcon.jsx'
 import BookmarkButton from './components/BookmarkButton.jsx'
 import SavedArticles from './components/SavedArticles.jsx'
 import useLocalLibrary from './hooks/useLocalLibrary.js'
@@ -140,14 +141,6 @@ function App() {
                 placeholder="Search news..."
                 onChange={(event) => setSearchInput(event.target.value)}
               />
-              <button type="submit">Search</button>
-              <button
-                type="button"
-                disabled={!searchInput && !activeSearch}
-                onClick={() => applySearch('')}
-              >
-                Clear
-              </button>
             </div>
           </form>
         </div>
@@ -163,10 +156,12 @@ function App() {
                     setPage(1)
                   }
                 }}>
+                <CategoryIcon category={category} />
                 {category}
               </button>
             ))}
             <button type="button" aria-pressed={showingSaved} onClick={() => setShowingSaved(true)}>
+              <CategoryIcon category="Saved" />
               Saved <span className="saved-count">{library.bookmarks.length}</span>
             </button>
           </nav>
@@ -180,7 +175,6 @@ function App() {
 
         <section className="news-section" hidden={showingSaved}>
           <h2>{selectedCategory === 'Top' ? 'Top news' : `${selectedCategory} news`}</h2>
-          {selectedCategory === 'Top' && <p>Headlines selected by BBC News and The Guardian, newest first.</p>}
 
           <details className="news-filters">
             <summary>Filter by publisher or date{(selectedPublisher !== 'All' || activeDates.from || activeDates.to) ? ' (active)' : ''}</summary>

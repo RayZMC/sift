@@ -80,7 +80,6 @@ h2 {
 
 .retry-button,
 .pagination button,
-.search-controls button,
 .date-actions button,
 .bookmark-controls button,
 .feed-tabs button,
@@ -96,7 +95,6 @@ h2 {
 
 .retry-button:focus-visible,
 .pagination button:focus-visible,
-.search-controls button:focus-visible,
 .search-controls input:focus-visible,
 .filter-field select:focus-visible,
 .filter-field input:focus-visible,
@@ -120,7 +118,6 @@ h2 {
 }
 
 .pagination button:disabled,
-.search-controls button:disabled,
 .date-actions button:disabled,
 .bookmark-controls button:disabled {
   cursor: not-allowed;
@@ -211,8 +208,26 @@ h2 {
 }
 
 .feed-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.feed-tabs button:first-child {
+  margin-left: auto;
+}
+
+.feed-tabs button:last-child {
+  margin-right: auto;
+}
+
+.category-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .saved-count {
