@@ -151,6 +151,9 @@ function App() {
               <option value="World">World</option>
               <option value="Business">Business</option>
               <option value="Technology">Technology</option>
+              <option value="Science">Science</option>
+              <option value="Sports">Sports</option>
+              <option value="Entertainment">Entertainment</option>
             </select>
           </div>
           <div className="filter-field">

@@ -22,7 +22,7 @@ export function createApp(loadArticles) {
     )) {
       return res.status(400).json({ error: 'Page must be an integer between 1 and 1000000.' })
     }
-    if (rawCategory !== undefined && !['All', 'World', 'Business', 'Technology'].includes(rawCategory)) {
+    if (rawCategory !== undefined && !['All', 'World', 'Business', 'Technology', 'Science', 'Sports', 'Entertainment'].includes(rawCategory)) {
       return res.status(400).json({ error: 'Unknown category.' })
     }
     if (rawSearch !== undefined && (typeof rawSearch !== 'string' || rawSearch.length > 200)) {

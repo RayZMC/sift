@@ -111,6 +111,20 @@ test('pagination passes validated page and category to the loader', async (t) =>
   ])
 })
 
+test('new categories pass through to the article loader', async (t) => {
+  const options = []
+  const baseUrl = await startApp(t, async (input) => {
+    options.push(input)
+    return { articles: [], unavailableFeeds: [] }
+  })
+  for (const category of ['Science', 'Sports', 'Entertainment']) {
+    const response = await fetch(`${baseUrl}/api/articles?category=${category}`)
+    assert.equal(response.status, 200)
+    await response.json()
+    assert.equal(options.at(-1).category, category)
+  }
+})
+
 test('invalid pages and categories return 400 before loading articles', async (t) => {
   let calls = 0
   const baseUrl = await startApp(t, async () => { calls += 1; return {} })

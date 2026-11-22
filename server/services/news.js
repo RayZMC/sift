@@ -13,6 +13,9 @@ const feeds = [
   { source: 'BBC News', category: 'World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
   { source: 'BBC News', category: 'Business', url: 'https://feeds.bbci.co.uk/news/business/rss.xml' },
   { source: 'The Guardian', category: 'Technology', url: 'https://www.theguardian.com/technology/rss' },
+  { source: 'BBC News', category: 'Science', url: 'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml' },
+  { source: 'BBC News', category: 'Sports', url: 'https://feeds.bbci.co.uk/sport/rss.xml' },
+  { source: 'BBC News', category: 'Entertainment', url: 'https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml' },
 ]
 
 function normalizeDate(value) {

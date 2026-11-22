@@ -13,6 +13,25 @@ function rss(items) {
   </channel></rss>`
 }
 
+test('assigns articles from the new feeds to their categories', async (t) => {
+  const categoriesByUrl = new Map([
+    ['https://feeds.bbci.co.uk/news/science_and_environment/rss.xml', 'Science'],
+    ['https://feeds.bbci.co.uk/sport/rss.xml', 'Sports'],
+    ['https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml', 'Entertainment'],
+  ])
+  t.mock.method(globalThis, 'fetch', async (url) => {
+    const category = categoriesByUrl.get(url)
+    return new Response(rss(category ? [{ title: category }] : []))
+  })
+  const { articles, unavailableFeeds } = await getArticles()
+  assert.deepEqual(unavailableFeeds, [])
+  assert.deepEqual(articles.map(({ title, category, source }) => [title, category, source]), [
+    ['Science', 'Science', 'BBC News'],
+    ['Sports', 'Sports', 'BBC News'],
+    ['Entertainment', 'Entertainment', 'BBC News'],
+  ])
+})
+
 test('sorts across feeds by publication time and keeps missing or invalid dates last', async (t) => {
   // Replace network requests with fixed RSS so this check works offline.
   t.mock.method(globalThis, 'fetch', async (url) => {
@@ -173,5 +192,8 @@ test('treats a valid empty feed as available, even when the other feeds fail', a
   assert.deepEqual(unavailableFeeds, [
     { source: 'BBC News', category: 'Business' },
     { source: 'The Guardian', category: 'Technology' },
+    { source: 'BBC News', category: 'Science' },
+    { source: 'BBC News', category: 'Sports' },
+    { source: 'BBC News', category: 'Entertainment' },
   ])
 })
