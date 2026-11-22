@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 function App() {
   const library = useLocalLibrary()
   const [showingSaved, setShowingSaved] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedCategory, setSelectedCategory] = useState('Top')
   const [selectedPublisher, setSelectedPublisher] = useState('All')
   const [articles, setArticles] = useState([])
   const [loadStatus, setLoadStatus] = useState('loading')
@@ -109,7 +109,7 @@ function App() {
 
       {library.error && <p role="alert">{library.error}</p>}
       <nav className="feed-tabs" aria-label="News categories">
-        {['All', 'World', 'Technology', 'Business', 'Science', 'Sports', 'Entertainment'].map(category => (
+        {['Top', 'World', 'Technology', 'Business', 'Science', 'Sports', 'Entertainment'].map(category => (
           <button key={category} type="button" aria-pressed={!showingSaved && selectedCategory === category}
             onClick={() => {
               setShowingSaved(false)
@@ -119,7 +119,7 @@ function App() {
                 setPage(1)
               }
             }}>
-            {category === 'All' ? 'Latest' : category}
+            {category}
           </button>
         ))}
         <button type="button" aria-pressed={showingSaved} onClick={() => setShowingSaved(true)}>
@@ -129,7 +129,8 @@ function App() {
       {showingSaved && <SavedArticles articles={library.bookmarks} onRemove={library.removeArticle} />}
 
       <section hidden={showingSaved}>
-        <h2>{selectedCategory === 'All' ? 'Latest news' : `${selectedCategory} news`}</h2>
+        <h2>{selectedCategory === 'Top' ? 'Top news' : `${selectedCategory} news`}</h2>
+        {selectedCategory === 'Top' && <p>Headlines selected by BBC News and The Guardian, newest first.</p>}
 
         <form
           className="search-form"

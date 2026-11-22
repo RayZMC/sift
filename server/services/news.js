@@ -16,6 +16,8 @@ const feeds = [
   { source: 'BBC News', category: 'Science', url: 'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml' },
   { source: 'BBC News', category: 'Sports', url: 'https://feeds.bbci.co.uk/sport/rss.xml' },
   { source: 'BBC News', category: 'Entertainment', url: 'https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml' },
+  { source: 'BBC News', category: 'Top', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
+  { source: 'The Guardian', category: 'Top', url: 'https://www.theguardian.com/international/rss' },
 ]
 
 function normalizeDate(value) {
@@ -75,6 +77,7 @@ async function fetchFeed(feed) {
       description: item.contentSnippet || '',
       url: item.link,
       category: feed.category,
+      isTop: feed.category === 'Top',
       publishedAt: normalizeDate(item.isoDate || item.pubDate),
       imageUrl: getImageUrl(item),
     }))
@@ -84,10 +87,12 @@ export async function getArticles() {
   const results = await Promise.allSettled(feeds.map(fetchFeed))
   const articleGroups = []
   const unavailableFeeds = []
+  const refreshedTopSources = []
 
   results.forEach((result, index) => {
     if (result.status === 'fulfilled') {
       articleGroups.push(result.value)
+      if (feeds[index].category === 'Top') refreshedTopSources.push(feeds[index].source)
     } else {
       const feed = feeds[index]
       unavailableFeeds.push({ source: feed.source, category: feed.category })
@@ -99,13 +104,14 @@ export async function getArticles() {
     throw new Error('All news feeds are unavailable')
   }
 
-  const seenUrls = new Set()
-  const uniqueArticles = articleGroups.flat().filter((article) => {
-    // Keep the first occurrence, using the order of the configured feeds.
-    if (seenUrls.has(article.url)) return false
-    seenUrls.add(article.url)
-    return true
-  })
+  const byUrl = new Map()
+  for (const article of articleGroups.flat()) {
+    const existing = byUrl.get(article.url)
+    // Keep the specific category while also marking headline-feed membership.
+    if (existing) existing.isTop ||= article.isTop
+    else byUrl.set(article.url, article)
+  }
+  const uniqueArticles = [...byUrl.values()]
 
   const articles = uniqueArticles.sort((a, b) => {
     // Keep undated articles after all dated articles.
@@ -114,5 +120,5 @@ export async function getArticles() {
     return Date.parse(b.publishedAt) - Date.parse(a.publishedAt)
   })
 
-  return { articles, unavailableFeeds }
+  return { articles, unavailableFeeds, refreshedTopSources }
 }

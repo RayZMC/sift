@@ -5,7 +5,7 @@ export async function getStoredArticles(db, {
   const { rows } = await db.query(`
     SELECT id, url, title, source, category, description, published_at, image_url
     FROM articles
-    WHERE ($1::text IS NULL OR category = $1)
+    WHERE ($1::text IS NULL OR ($1 = 'Top' AND is_top) OR ($1 <> 'Top' AND category = $1))
       AND ($4::text = '' OR strpos(lower(title), lower($4)) > 0
         OR strpos(lower(description), lower($4)) > 0)
       AND ($5::text IS NULL OR source = $5)
@@ -47,24 +47,28 @@ export async function getArticlePage(db, {
   }
 }
 
-export async function saveArticles(client, articles) {
+export async function saveArticles(client, articles, refreshedTopSources = []) {
   await client.query('BEGIN')
   try {
+    // Refresh headline membership only when that publisher's Top feed succeeded.
+    // Failed feeds retain their previous headlines until a later successful import.
+    await client.query('UPDATE articles SET is_top = FALSE WHERE source = ANY($1::text[]) AND is_top', [refreshedTopSources])
     for (const article of articles) {
       // Values are passed separately so publisher text is never executed as SQL.
       await client.query(`
-        INSERT INTO articles (url, title, source, category, description, published_at, image_url)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO articles (url, title, source, category, description, published_at, image_url, is_top)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         ON CONFLICT (url) DO UPDATE SET
           title = EXCLUDED.title,
           source = EXCLUDED.source,
-          category = EXCLUDED.category,
+          category = CASE WHEN EXCLUDED.category = 'Top' THEN articles.category ELSE EXCLUDED.category END,
           description = EXCLUDED.description,
           published_at = COALESCE(EXCLUDED.published_at, articles.published_at),
-          image_url = COALESCE(EXCLUDED.image_url, articles.image_url)
+          image_url = COALESCE(EXCLUDED.image_url, articles.image_url),
+          is_top = articles.is_top OR EXCLUDED.is_top
       `, [
         article.url, article.title, article.source, article.category,
-        article.description ?? '', article.publishedAt ?? null, article.imageUrl ?? null,
+        article.description ?? '', article.publishedAt ?? null, article.imageUrl ?? null, article.isTop ?? false,
       ])
     }
     await client.query('COMMIT')

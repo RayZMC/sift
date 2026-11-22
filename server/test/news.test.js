@@ -143,7 +143,10 @@ test('keeps successful feeds and reports an unavailable publisher', async (t) =>
   const { articles, unavailableFeeds } = await getArticles()
 
   assert.deepEqual(articles.map((article) => article.category), ['World', 'Business'])
-  assert.deepEqual(unavailableFeeds, [{ source: 'The Guardian', category: 'Technology' }])
+  assert.deepEqual(unavailableFeeds, [
+    { source: 'The Guardian', category: 'Technology' },
+    { source: 'The Guardian', category: 'Top' },
+  ])
 })
 
 test('handles a timed-out feed and malformed RSS without losing the remaining feed', async (t) => {
@@ -195,5 +198,7 @@ test('treats a valid empty feed as available, even when the other feeds fail', a
     { source: 'BBC News', category: 'Science' },
     { source: 'BBC News', category: 'Sports' },
     { source: 'BBC News', category: 'Entertainment' },
+    { source: 'BBC News', category: 'Top' },
+    { source: 'The Guardian', category: 'Top' },
   ])
 })

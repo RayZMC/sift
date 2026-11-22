@@ -8,7 +8,7 @@ export default function SavedArticles({ articles, onRemove }) {
   return <section aria-labelledby="saved-heading">
     <h2 id="saved-heading">Saved articles</h2>
     <p>Saved in this browser only. Clearing browser data removes these bookmarks.</p>
-    {articles.length === 0 && <p>No saved articles yet. Save articles from Latest news to read them later.</p>}
+    {articles.length === 0 && <p>No saved articles yet. Save articles from Top or a category to read them later.</p>}
     {articles.slice((page - 1) * 20, page * 20).map(article => (
       <ArticleCard key={article.id} article={article}>
         <BookmarkButton saved onRemove={() => onRemove(article.id)} />
