@@ -1,16 +1,66 @@
 main {
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 32px 20px;
 }
 
-header {
-  margin-bottom: 32px;
+.site-header {
+  background-color: white;
+  border-bottom: 1px solid #d1d5db;
 }
 
-h1 {
+.top-bar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.brand {
   margin: 0;
-  font-size: 40px;
+  font-size: 30px;
+}
+
+.brand button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.logo-placeholder {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #1d4ed8;
+  color: white;
+  font-size: 24px;
+}
+
+.category-bar {
+  border-top: 1px solid #d1d5db;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 section {
@@ -54,7 +104,8 @@ h2 {
 .filter-field input:focus-visible,
 .date-actions button:focus-visible,
 .bookmark-controls button:focus-visible,
-.feed-tabs button:focus-visible {
+.feed-tabs button:focus-visible,
+.brand button:focus-visible {
   outline: 3px solid #2563eb;
   outline-offset: 3px;
 }
@@ -78,14 +129,15 @@ h2 {
 }
 
 .search-form {
-  margin-bottom: 20px;
+  flex: 0 1 600px;
+  min-width: 0;
 }
 
 .search-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .search-controls input {
@@ -149,13 +201,13 @@ h2 {
 }
 
 .feed-tabs {
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
   overflow-x: auto;
-  padding: 8px 4px 12px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid #d1d5db;
+  padding: 12px 20px;
 }
 
 .feed-tabs button {
@@ -219,6 +271,25 @@ h2 {
 }
 
 @media (max-width: 600px) {
+  .top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px 12px;
+  }
+
+  .search-form {
+    flex-basis: auto;
+  }
+
+  .search-controls input {
+    flex-basis: 150px;
+  }
+
+  .feed-tabs {
+    padding: 12px;
+  }
+
   main {
     padding: 24px 12px;
   }

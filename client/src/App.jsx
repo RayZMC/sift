@@ -84,6 +84,7 @@ function App() {
   }
 
   function applySearch(value) {
+    setShowingSaved(false)
     const search = value.trim()
     startLoading()
     setSearchInput(search)
@@ -101,13 +102,56 @@ function App() {
   }
 
   return (
-    <main>
-      <header>
-        <h1>Sift</h1>
-        <p>Discover news from multiple sources in one place.</p>
-      </header>
-
-      {library.error && <p role="alert">{library.error}</p>}
+    <>
+      <header className="site-header">
+        <div className="top-bar">
+          <h1 className="brand">
+            <button type="button" aria-label="Sift home" onClick={() => {
+              setShowingSaved(false)
+              startLoading()
+              setSelectedCategory('Top')
+              setSelectedPublisher('All')
+              setSearchInput('')
+              setActiveSearch('')
+              setActiveDates({ from: '', to: '' })
+              setPage(1)
+              setRetryCount(count => count + 1)
+            }}>
+              <span className="logo-placeholder" aria-hidden="true">S</span>
+              <span>Sift</span>
+            </button>
+          </h1>
+        <form
+          className="search-form"
+          role="search"
+          aria-label="Search news"
+          onSubmit={(event) => {
+            event.preventDefault()
+            applySearch(searchInput)
+          }}
+        >
+          <label className="visually-hidden" htmlFor="news-search">Search news titles and descriptions in the selected category</label>
+          <div className="search-controls">
+            <input
+              id="news-search"
+              type="search"
+              value={searchInput}
+              maxLength={200}
+              placeholder="Search news..."
+              onChange={(event) => setSearchInput(event.target.value)}
+            />
+            <button type="submit">Search</button>
+            <button
+              type="button"
+              disabled={!searchInput && !activeSearch}
+              onClick={() => applySearch('')}
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+        </div>
+        <div className="category-bar">
       <nav className="feed-tabs" aria-label="News categories">
         {['Top', 'World', 'Technology', 'Business', 'Science', 'Sports', 'Entertainment'].map(category => (
           <button key={category} type="button" aria-pressed={!showingSaved && selectedCategory === category}
@@ -126,41 +170,18 @@ function App() {
           Saved <span className="saved-count">{library.bookmarks.length}</span>
         </button>
       </nav>
+        </div>
+      </header>
+      <main>
+
+      {library.error && <p role="alert">{library.error}</p>}
+
       {showingSaved && <SavedArticles articles={library.bookmarks} onRemove={library.removeArticle} />}
 
       <section hidden={showingSaved}>
         <h2>{selectedCategory === 'Top' ? 'Top news' : `${selectedCategory} news`}</h2>
         {selectedCategory === 'Top' && <p>Headlines selected by BBC News and The Guardian, newest first.</p>}
 
-        <form
-          className="search-form"
-          role="search"
-          aria-label="Search news"
-          onSubmit={(event) => {
-            event.preventDefault()
-            applySearch(searchInput)
-          }}
-        >
-          <label htmlFor="news-search">Search titles and descriptions</label>
-          <div className="search-controls">
-            <input
-              id="news-search"
-              type="search"
-              value={searchInput}
-              maxLength={200}
-              placeholder="e.g. artificial intelligence"
-              onChange={(event) => setSearchInput(event.target.value)}
-            />
-            <button type="submit">Search</button>
-            <button
-              type="button"
-              disabled={!searchInput && !activeSearch}
-              onClick={() => applySearch('')}
-            >
-              Clear
-            </button>
-          </div>
-        </form>
 
         <div className="feed-filters">
           <div className="filter-field">
@@ -232,7 +253,8 @@ function App() {
           </button>
         </nav>
       </section>
-    </main>
+      </main>
+    </>
   )
 }
 
