@@ -27,7 +27,7 @@ function ArticleCard({ article, children, featured = false }) {
         <h3>{article.url ? <a href={article.url}>{article.title}</a> : article.title}</h3>
         <p className="article-description">{article.description}</p>
         <div className="article-actions">
-          {article.url && <a className="read-story" href={article.url} aria-label={`Read story: ${article.title}`}>Read story <span aria-hidden="true">?</span></a>}
+          {article.url && <a className="read-story" href={article.url} aria-label={`Read story: ${article.title}`}>Read story <span aria-hidden="true">&rarr;</span></a>}
           {children}
         </div>
       </div>
