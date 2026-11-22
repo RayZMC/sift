@@ -16,8 +16,20 @@ const feeds = [
   { source: 'BBC News', category: 'Science', url: 'https://feeds.bbci.co.uk/news/science_and_environment/rss.xml' },
   { source: 'BBC News', category: 'Sports', url: 'https://feeds.bbci.co.uk/sport/rss.xml' },
   { source: 'BBC News', category: 'Entertainment', url: 'https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml' },
+  { source: 'CBC News', category: 'World', url: 'https://www.cbc.ca/webfeed/rss/rss-world' },
+  { source: 'CBC News', category: 'Business', url: 'https://www.cbc.ca/webfeed/rss/rss-business' },
+  { source: 'Global News', category: 'World', url: 'https://globalnews.ca/world/feed/' },
+  { source: 'Global News', category: 'Business', url: 'https://globalnews.ca/money/feed/' },
+  { source: 'NPR', category: 'Science', url: 'https://feeds.npr.org/1007/rss.xml' },
+  { source: 'NPR', category: 'Technology', url: 'https://feeds.npr.org/1019/rss.xml' },
+  { source: 'PBS News', category: 'World', url: 'https://www.pbs.org/newshour/feeds/rss/world' },
+  { source: 'PBS News', category: 'Science', url: 'https://www.pbs.org/newshour/feeds/rss/science' },
   { source: 'BBC News', category: 'Top', url: 'https://feeds.bbci.co.uk/news/rss.xml' },
   { source: 'The Guardian', category: 'Top', url: 'https://www.theguardian.com/international/rss' },
+  { source: 'CBC News', category: 'Top', url: 'https://www.cbc.ca/webfeed/rss/rss-topstories' },
+  { source: 'Global News', category: 'Top', url: 'https://globalnews.ca/feed/' },
+  { source: 'NPR', category: 'Top', url: 'https://feeds.npr.org/1001/rss.xml' },
+  { source: 'PBS News', category: 'Top', url: 'https://www.pbs.org/newshour/feeds/rss/headlines' },
 ]
 
 function normalizeDate(value) {
@@ -40,6 +52,10 @@ function getImageUrl(item) {
       .sort((a, b) => Number(b.$?.width || 0) - Number(a.$?.width || 0))
       .map((image) => image.$?.url),
     item.enclosure?.type?.startsWith('image/') ? item.enclosure.url : null,
+    // Some feeds put the lead image inside their HTML description.
+    ...[item.content, item['content:encoded']].map(content => typeof content === 'string'
+      ? content.match(/<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i)?.[1]?.replace(/&amp;/g, '&')
+      : null),
   ]
 
   for (const candidate of candidates) {

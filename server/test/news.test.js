@@ -35,6 +35,7 @@ test('assigns articles from the new feeds to their categories', async (t) => {
 test('sorts across feeds by publication time and keeps missing or invalid dates last', async (t) => {
   // Replace network requests with fixed RSS so this check works offline.
   t.mock.method(globalThis, 'fetch', async (url) => {
+    if (!url.includes('bbci.co.uk') && !url.includes('theguardian.com')) return new Response(rss([]))
     if (url.includes('/world/')) {
       return new Response(rss([
         { title: 'undated' },
@@ -68,6 +69,7 @@ test('sorts across feeds by publication time and keeps missing or invalid dates 
 test('removes repeated URLs within and across feeds while keeping distinct articles', async (t) => {
   const sharedUrl = 'https://example.com/shared'
   t.mock.method(globalThis, 'fetch', async (url) => {
+    if (!url.includes('bbci.co.uk') && !url.includes('theguardian.com')) return new Response(rss([]))
     if (url.includes('/world/')) {
       return new Response(rss([
         { title: 'Original headline', link: sharedUrl, date: 'Mon, 09 Nov 2026 12:00:00 GMT' },
@@ -135,6 +137,7 @@ test('extracts publisher images and ignores missing, invalid, or non-image media
 test('keeps successful feeds and reports an unavailable publisher', async (t) => {
   t.mock.method(console, 'warn', () => {})
   t.mock.method(globalThis, 'fetch', async (url) => {
+    if (!url.includes('bbci.co.uk') && !url.includes('theguardian.com')) return new Response(rss([]))
     if (url.includes('theguardian.com')) return new Response('', { status: 503 })
     const title = url.includes('/world/') ? 'world-story' : 'business-story'
     return new Response(rss([{ title }]))
@@ -152,6 +155,7 @@ test('keeps successful feeds and reports an unavailable publisher', async (t) =>
 test('handles a timed-out feed and malformed RSS without losing the remaining feed', async (t) => {
   t.mock.method(console, 'warn', () => {})
   t.mock.method(globalThis, 'fetch', async (url) => {
+    if (!url.includes('bbci.co.uk') && !url.includes('theguardian.com')) return new Response(rss([]))
     if (url.includes('/world/')) throw new DOMException('Request timed out', 'TimeoutError')
     if (url.includes('/business/')) return new Response('<rss><broken>')
     return new Response(rss([{ title: 'technology-story' }]))
@@ -186,7 +190,7 @@ test('rejects when every feed fails and succeeds when a later request recovers',
 test('treats a valid empty feed as available, even when the other feeds fail', async (t) => {
   t.mock.method(console, 'warn', () => {})
   t.mock.method(globalThis, 'fetch', async (url) => {
-    if (url.includes('/world/')) return new Response(rss([]))
+    if (url === 'https://feeds.bbci.co.uk/news/world/rss.xml') return new Response(rss([]))
     throw new Error('Network unavailable')
   })
 
@@ -198,7 +202,19 @@ test('treats a valid empty feed as available, even when the other feeds fail', a
     { source: 'BBC News', category: 'Science' },
     { source: 'BBC News', category: 'Sports' },
     { source: 'BBC News', category: 'Entertainment' },
+    { source: 'CBC News', category: 'World' },
+    { source: 'CBC News', category: 'Business' },
+    { source: 'Global News', category: 'World' },
+    { source: 'Global News', category: 'Business' },
+    { source: 'NPR', category: 'Science' },
+    { source: 'NPR', category: 'Technology' },
+    { source: 'PBS News', category: 'World' },
+    { source: 'PBS News', category: 'Science' },
     { source: 'BBC News', category: 'Top' },
     { source: 'The Guardian', category: 'Top' },
+    { source: 'CBC News', category: 'Top' },
+    { source: 'Global News', category: 'Top' },
+    { source: 'NPR', category: 'Top' },
+    { source: 'PBS News', category: 'Top' },
   ])
 })

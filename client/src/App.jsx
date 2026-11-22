@@ -193,6 +193,10 @@ function App() {
                   <option value="All">All publishers</option>
                   <option value="BBC News">BBC News</option>
                   <option value="The Guardian">The Guardian</option>
+                  <option value="CBC News">CBC News</option>
+                  <option value="Global News">Global News</option>
+                  <option value="NPR">NPR</option>
+                  <option value="PBS News">PBS News</option>
                 </select>
               </div>
             </div>

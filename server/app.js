@@ -29,7 +29,7 @@ export function createApp(loadArticles) {
       return res.status(400).json({ error: 'Search must be a single string of at most 200 characters.' })
     }
     const search = (rawSearch ?? '').trim()
-    if (rawPublisher !== undefined && !['All', 'BBC News', 'The Guardian'].includes(rawPublisher)) {
+    if (rawPublisher !== undefined && !['All', 'BBC News', 'The Guardian', 'CBC News', 'Global News', 'NPR', 'PBS News'].includes(rawPublisher)) {
       return res.status(400).json({ error: 'Unknown publisher.' })
     }
     const publisher = rawPublisher === undefined || rawPublisher === 'All' ? null : rawPublisher
