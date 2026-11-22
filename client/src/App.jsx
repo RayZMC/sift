@@ -121,138 +121,142 @@ function App() {
               <span>Sift</span>
             </button>
           </h1>
-        <form
-          className="search-form"
-          role="search"
-          aria-label="Search news"
-          onSubmit={(event) => {
-            event.preventDefault()
-            applySearch(searchInput)
-          }}
-        >
-          <label className="visually-hidden" htmlFor="news-search">Search news titles and descriptions in the selected category</label>
-          <div className="search-controls">
-            <input
-              id="news-search"
-              type="search"
-              value={searchInput}
-              maxLength={200}
-              placeholder="Search news..."
-              onChange={(event) => setSearchInput(event.target.value)}
-            />
-            <button type="submit">Search</button>
-            <button
-              type="button"
-              disabled={!searchInput && !activeSearch}
-              onClick={() => applySearch('')}
-            >
-              Clear
-            </button>
-          </div>
-        </form>
+          <form
+            className="search-form"
+            role="search"
+            aria-label="Search news"
+            onSubmit={(event) => {
+              event.preventDefault()
+              applySearch(searchInput)
+            }}
+          >
+            <label className="visually-hidden" htmlFor="news-search">Search news titles and descriptions in the selected category</label>
+            <div className="search-controls">
+              <input
+                id="news-search"
+                type="search"
+                value={searchInput}
+                maxLength={200}
+                placeholder="Search news..."
+                onChange={(event) => setSearchInput(event.target.value)}
+              />
+              <button type="submit">Search</button>
+              <button
+                type="button"
+                disabled={!searchInput && !activeSearch}
+                onClick={() => applySearch('')}
+              >
+                Clear
+              </button>
+            </div>
+          </form>
         </div>
         <div className="category-bar">
-      <nav className="feed-tabs" aria-label="News categories">
-        {['Top', 'World', 'Technology', 'Business', 'Science', 'Sports', 'Entertainment'].map(category => (
-          <button key={category} type="button" aria-pressed={!showingSaved && selectedCategory === category}
-            onClick={() => {
-              setShowingSaved(false)
-              if (selectedCategory !== category) {
-                startLoading()
-                setSelectedCategory(category)
-                setPage(1)
-              }
-            }}>
-            {category}
-          </button>
-        ))}
-        <button type="button" aria-pressed={showingSaved} onClick={() => setShowingSaved(true)}>
-          Saved <span className="saved-count">{library.bookmarks.length}</span>
-        </button>
-      </nav>
+          <nav className="feed-tabs" aria-label="News categories">
+            {['Top', 'World', 'Technology', 'Business', 'Science', 'Sports', 'Entertainment'].map(category => (
+              <button key={category} type="button" aria-pressed={!showingSaved && selectedCategory === category}
+                onClick={() => {
+                  setShowingSaved(false)
+                  if (selectedCategory !== category) {
+                    startLoading()
+                    setSelectedCategory(category)
+                    setPage(1)
+                  }
+                }}>
+                {category}
+              </button>
+            ))}
+            <button type="button" aria-pressed={showingSaved} onClick={() => setShowingSaved(true)}>
+              Saved <span className="saved-count">{library.bookmarks.length}</span>
+            </button>
+          </nav>
         </div>
       </header>
       <main>
 
-      {library.error && <p role="alert">{library.error}</p>}
+        {library.error && <p role="alert">{library.error}</p>}
 
-      {showingSaved && <SavedArticles articles={library.bookmarks} onRemove={library.removeArticle} />}
+        {showingSaved && <SavedArticles articles={library.bookmarks} onRemove={library.removeArticle} />}
 
-      <section hidden={showingSaved}>
-        <h2>{selectedCategory === 'Top' ? 'Top news' : `${selectedCategory} news`}</h2>
-        {selectedCategory === 'Top' && <p>Headlines selected by BBC News and The Guardian, newest first.</p>}
+        <section className="news-section" hidden={showingSaved}>
+          <h2>{selectedCategory === 'Top' ? 'Top news' : `${selectedCategory} news`}</h2>
+          {selectedCategory === 'Top' && <p>Headlines selected by BBC News and The Guardian, newest first.</p>}
 
+          <details className="news-filters">
+            <summary>Filter by publisher or date{(selectedPublisher !== 'All' || activeDates.from || activeDates.to) ? ' (active)' : ''}</summary>
+            <div className="feed-filters">
+              <div className="filter-field">
+                <label htmlFor="publisher">Publisher</label>
+                <select
+                  id="publisher"
+                  value={selectedPublisher}
+                  onChange={(event) => {
+                    startLoading()
+                    setSelectedPublisher(event.target.value)
+                    setPage(1)
+                  }}
+                >
+                  <option value="All">All publishers</option>
+                  <option value="BBC News">BBC News</option>
+                  <option value="The Guardian">The Guardian</option>
+                </select>
+              </div>
+            </div>
 
-        <div className="feed-filters">
-          <div className="filter-field">
-            <label htmlFor="publisher">Publisher</label>
-            <select
-              id="publisher"
-              value={selectedPublisher}
-              onChange={(event) => {
-                startLoading()
-                setSelectedPublisher(event.target.value)
-                setPage(1)
-              }}
-            >
-              <option value="All">All publishers</option>
-              <option value="BBC News">BBC News</option>
-              <option value="The Guardian">The Guardian</option>
-            </select>
+            <DateFilter activeDates={activeDates} onApply={applyDates} />
+          </details>
+
+          {activeSearch && (
+            <p className="search-summary">Search results for “{activeSearch}”</p>
+          )}
+
+          {loadStatus === 'loading' && (
+            <p role="status">Loading articles...</p>
+          )}
+
+          {loadStatus === 'error' && (
+            <p role="alert" className="feed-notice">Could not load news right now. Please try again shortly.</p>
+          )}
+
+          {loadStatus === 'error' && (
+            <button type="button" className="retry-button" onClick={retryArticles}>
+              Try again
+            </button>
+          )}
+
+          {loadStatus === 'success' && articles.length === 0 && (
+            <p>{activeSearch
+              ? 'No articles match this search on this page. Try another search or adjust your filters.'
+              : 'No articles match these filters on this page. Try adjusting your category, publisher, or dates.'}</p>
+          )}
+
+          <div className="article-grid">
+            {articles.map((article, index) => (
+              <ArticleCard key={article.id} article={article} featured={index === 0}>
+                <BookmarkButton saved={library.bookmarks.some(saved => saved.id === article.id)}
+                  onSave={() => library.saveArticle(article)} onRemove={() => library.removeArticle(article.id)} />
+              </ArticleCard>
+            ))}
           </div>
-        </div>
 
-        <DateFilter activeDates={activeDates} onApply={applyDates} />
-
-        {activeSearch && (
-          <p className="search-summary">Search results for “{activeSearch}”</p>
-        )}
-
-        {loadStatus === 'loading' && (
-          <p role="status">Loading articles...</p>
-        )}
-
-        {loadStatus === 'error' && (
-          <p role="alert" className="feed-notice">Could not load news right now. Please try again shortly.</p>
-        )}
-
-        {loadStatus === 'error' && (
-          <button type="button" className="retry-button" onClick={retryArticles}>
-            Try again
-          </button>
-        )}
-
-        {loadStatus === 'success' && articles.length === 0 && (
-          <p>{activeSearch
-            ? 'No articles match this search on this page. Try another search or adjust your filters.'
-            : 'No articles match these filters on this page. Try adjusting your category, publisher, or dates.'}</p>
-        )}
-
-        {articles.map((article) => (
-          <ArticleCard key={article.id} article={article}>
-            <BookmarkButton saved={library.bookmarks.some(saved => saved.id === article.id)}
-              onSave={() => library.saveArticle(article)} onRemove={() => library.removeArticle(article.id)} />
-          </ArticleCard>
-        ))}
-
-        <nav className="pagination" aria-label="News pages">
-          <button
-            type="button"
-            disabled={loadStatus === 'loading' || page === 1}
-            onClick={() => changePage(page - 1)}
-          >
-            Previous
-          </button>
-          <span role="status">Page {page}</span>
-          <button
-            type="button"
-            disabled={loadStatus !== 'success' || !pagination.hasNext}
-            onClick={() => changePage(page + 1)}
-          >
-            Next
-          </button>
-        </nav>
-      </section>
+          <nav className="pagination" aria-label="News pages">
+            <button
+              type="button"
+              disabled={loadStatus === 'loading' || page === 1}
+              onClick={() => changePage(page - 1)}
+            >
+              Previous
+            </button>
+            <span role="status">Page {page}</span>
+            <button
+              type="button"
+              disabled={loadStatus !== 'success' || !pagination.hasNext}
+              onClick={() => changePage(page + 1)}
+            >
+              Next
+            </button>
+          </nav>
+        </section>
       </main>
     </>
   )
