@@ -1,10 +1,12 @@
 import './App.css'
 import siftLogo from './assets/sift_dark_theme_transparent.png'
+import siftLightLogo from './assets/sift_light_theme_transparent.png'
 import ArticleCard from './components/ArticleCard.jsx'
 import DateFilter from './components/DateFilter.jsx'
 import FilterPopover from './components/FilterPopover.jsx'
 import CategoryIcon from './components/CategoryIcon.jsx'
 import SiteFooter from './components/SiteFooter.jsx'
+import ThemeToggle from './components/ThemeToggle.jsx'
 import InfoPage from './components/InfoPage.jsx'
 import BookmarkButton from './components/BookmarkButton.jsx'
 import SavedArticles from './components/SavedArticles.jsx'
@@ -131,7 +133,8 @@ function App() {
               setPage(1)
               setRetryCount(count => count + 1)
             }}>
-              <img className="brand-logo" src={siftLogo} alt="Sift" />
+              <img className="brand-logo brand-logo-dark" src={siftLogo} alt="Sift" />
+              <img className="brand-logo brand-logo-light" src={siftLightLogo} alt="Sift" />
             </button>
           </h1>
           <form
@@ -155,6 +158,7 @@ function App() {
               />
             </div>
           </form>
+          <ThemeToggle />
         </div>
         <div className="category-bar">
           <nav className="feed-tabs" aria-label="News categories">
