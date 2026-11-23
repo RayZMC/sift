@@ -10,8 +10,8 @@
     "news:import": "node --env-file-if-exists=.env scripts/ingest-news.js",
     "news:watch": "node --env-file-if-exists=.env scripts/watch-news.js",
     "test:db": "node --env-file-if-exists=.env --test checks/articles-db.js",
-    "db:check": "node --env-file-if-exists=.env scripts/check-db.js",
-    "db:migrate": "node --env-file-if-exists=.env scripts/migrate.js",
+    "db:check": "node --env-file-if-exists=.env --env-file-if-exists=.env.neon scripts/check-db.js",
+    "db:migrate": "node --env-file-if-exists=.env --env-file-if-exists=.env.neon scripts/migrate.js",
     "test": "node --test"
   },
   "keywords": [],
