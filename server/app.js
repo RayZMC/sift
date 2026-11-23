@@ -1,4 +1,5 @@
 import express from 'express'
+import { join } from 'node:path'
 
 function isCalendarDate(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || value.startsWith('0000')) return false
@@ -7,8 +8,13 @@ function isCalendarDate(value) {
 }
 
 // Receive the article loader so API tests can supply data without a database.
-export function createApp(loadArticles) {
+export function createApp(loadArticles, { clientDirectory } = {}) {
   const app = express()
+  app.disable('x-powered-by')
+  app.use('/api', (req, res, next) => {
+    res.set('Cache-Control', 'no-store')
+    next()
+  })
 
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' })
@@ -49,6 +55,24 @@ export function createApp(loadArticles) {
       res.status(500).json({ error: 'Could not load articles. Please try again shortly.' })
     }
   })
+
+  // Keep unknown API requests separate from frontend files.
+  app.use('/api', (req, res) => {
+    res.status(404).json({ error: 'API route not found.' })
+  })
+
+  if (clientDirectory) {
+    // Vite gives bundled assets content-based filenames, safe to cache long-term.
+    app.use('/assets', express.static(join(clientDirectory, 'assets'), {
+      maxAge: '1y', immutable: true, index: false,
+    }))
+    app.use(express.static(clientDirectory, {
+      maxAge: 0,
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-cache')
+      },
+    }))
+  }
 
   return app
 }
