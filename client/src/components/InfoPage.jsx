@@ -22,7 +22,7 @@ export default function InfoPage({ page }) {
       </>}
       {page === 'contact' && <>
         <p>Have feedback, a question, or an issue to report?</p>
-        <p>Add email here later.</p>
+        <p>Email us at <a href="mailto:siftnews@proton.me">siftnews@proton.me</a>.</p>
       </>}
       {page === 'privacy' && <>
         <h3>Saved articles</h3>
