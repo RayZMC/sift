@@ -91,7 +91,7 @@ main {
 
 .brand {
   margin: 0;
-  font-size: 30px;
+  flex-shrink: 0;
 }
 
 .brand button {
@@ -107,15 +107,11 @@ main {
   cursor: pointer;
 }
 
-.logo-placeholder {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: var(--accent-fill);
-  color: var(--on-accent);
-  font-size: 24px;
+.brand-logo {
+  display: block;
+  width: 160px;
+  max-width: 100%;
+  height: auto;
 }
 
 .category-bar {

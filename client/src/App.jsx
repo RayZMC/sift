@@ -1,4 +1,5 @@
 import './App.css'
+import siftLogo from './assets/sift_dark_theme_transparent.png'
 import ArticleCard from './components/ArticleCard.jsx'
 import DateFilter from './components/DateFilter.jsx'
 import FilterPopover from './components/FilterPopover.jsx'
@@ -130,8 +131,7 @@ function App() {
               setPage(1)
               setRetryCount(count => count + 1)
             }}>
-              <span className="logo-placeholder" aria-hidden="true">S</span>
-              <span>Sift</span>
+              <img className="brand-logo" src={siftLogo} alt="Sift" />
             </button>
           </h1>
           <form
