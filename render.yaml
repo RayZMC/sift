@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: sift
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci --prefix server && npm ci --prefix client && npm --prefix server run build
+    startCommand: npm --prefix server start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
