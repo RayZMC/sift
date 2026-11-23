@@ -3,12 +3,21 @@ import ArticleCard from './components/ArticleCard.jsx'
 import DateFilter from './components/DateFilter.jsx'
 import FilterPopover from './components/FilterPopover.jsx'
 import CategoryIcon from './components/CategoryIcon.jsx'
+import SiteFooter from './components/SiteFooter.jsx'
+import InfoPage from './components/InfoPage.jsx'
 import BookmarkButton from './components/BookmarkButton.jsx'
 import SavedArticles from './components/SavedArticles.jsx'
 import useLocalLibrary from './hooks/useLocalLibrary.js'
 import { useEffect, useState } from 'react'
 
 function App() {
+  const [locationHash, setLocationHash] = useState(() => window.location.hash)
+  const infoPage = ['#about', '#contact', '#privacy'].includes(locationHash) ? locationHash.slice(1) : null
+  useEffect(() => {
+    const updateHash = () => setLocationHash(window.location.hash)
+    window.addEventListener('hashchange', updateHash)
+    return () => window.removeEventListener('hashchange', updateHash)
+  }, [])
   const library = useLocalLibrary()
   const [showingSaved, setShowingSaved] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('Top')
@@ -86,6 +95,7 @@ function App() {
   }
 
   function applySearch(value) {
+    window.location.hash = ''
     setShowingSaved(false)
     const search = value.trim()
     startLoading()
@@ -109,6 +119,7 @@ function App() {
         <div className="top-bar">
           <h1 className="brand">
             <button type="button" aria-label="Sift home" onClick={() => {
+              window.location.hash = ''
               setShowingSaved(false)
               startLoading()
               setSelectedCategory('Top')
@@ -148,8 +159,9 @@ function App() {
         <div className="category-bar">
           <nav className="feed-tabs" aria-label="News categories">
             {['Top', 'World', 'Technology', 'Business', 'Science', 'Sports', 'Entertainment'].map(category => (
-              <button key={category} type="button" aria-pressed={!showingSaved && selectedCategory === category}
+              <button key={category} type="button" aria-pressed={!infoPage && !showingSaved && selectedCategory === category}
                 onClick={() => {
+                  window.location.hash = ''
                   setShowingSaved(false)
                   if (selectedCategory !== category) {
                     startLoading()
@@ -161,7 +173,7 @@ function App() {
                 {category}
               </button>
             ))}
-            <button type="button" aria-pressed={showingSaved} onClick={() => setShowingSaved(true)}>
+            <button type="button" aria-pressed={!infoPage && showingSaved} onClick={() => { window.location.hash = ''; setShowingSaved(true) }}>
               <CategoryIcon category="Saved" />
               Saved <span className="saved-count">{library.bookmarks.length}</span>
             </button>
@@ -169,6 +181,8 @@ function App() {
         </div>
       </header>
       <main>
+        {infoPage && <InfoPage page={infoPage} />}
+        <div hidden={Boolean(infoPage)}>
 
         {library.error && <p role="alert">{library.error}</p>}
 
@@ -257,7 +271,9 @@ function App() {
             </button>
           </nav>
         </section>
+        </div>
       </main>
+      <SiteFooter currentPage={infoPage} />
     </>
   )
 }
